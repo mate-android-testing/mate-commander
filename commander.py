@@ -75,12 +75,6 @@ class Commander:
                ):
                 valid_config = False
                 print("With server log flag active: Missing mandatory MATE_SERVER options logfile and/or logfile_err")
-            if ( not (self.config.has_option("MATE_SERVER", "timeout")
-                      and self.config.has_option("MATE_SERVER", "max_event_sequence_length")
-                      and self.config.has_option("MATE_SERVER", "port"))
-               ):
-                valid_config = False
-                print("You have to either specify both timeout and max_event_sequence_length or neither.")
         if self.config.has_section("MATE"):
             if not self.config.has_option("MATE", "test"):
                 valid_config = False
@@ -176,7 +170,6 @@ class Commander:
             return
         self.install_app_command = ["adb", "-s", self.emu_name, "install", "-g", apk]
 
-        # print(apk)
         self.config["APP"]["id"] = os.path.split(apk)[1].split(".apk")[0]
 
         print("Installing app: " + self.config["APP"]["id"] + ".apk" + "...")
@@ -259,6 +252,19 @@ class Commander:
         print(out)
         print(err)
         print("Done")
+        
+    def read_mate_server_properties(self):
+    
+        if not os.path.exists("mate-server.properties"):
+            return None
+    
+        # equip with virtual default section
+        with open("mate-server.properties", 'r') as f:
+            config_string = '[DEFAULT]\n' + f.read()
+            
+        config = configparser.ConfigParser()
+        config.read_string(config_string)
+        return config
 
     def run_mate_server(self):
         if not self.config.has_section("MATE_SERVER"):
@@ -267,10 +273,7 @@ class Commander:
         sv_conf = self.config['MATE_SERVER']
         self.mate_server_command = self.jar_prefix("MATE_SERVER")
         self.mate_server_command.append(str(Path(sv_conf["command"]).expanduser()))
-        self.mate_server_command.append(sv_conf["timeout"])
-        self.mate_server_command.append(sv_conf["max_event_sequence_length"])
-        self.mate_server_command.append(sv_conf["port"])
-        self.mate_server_command.append(self.emu_name)
+        
         if self.config.has_option("MATE_SERVER", "log") and sv_conf["log"] == "yes":
             self.fs = open(sv_conf["logfile"], "a")
             self.fs_err = open(sv_conf["logfile_err"], "a")
@@ -284,18 +287,31 @@ class Commander:
         else:
             print("Starting mate server...")
             self.mate_server_proc = subprocess.Popen(self.mate_server_command, stdout=subprocess.PIPE)
-        if self.config.has_option("MATE_SERVER", "port") and sv_conf["port"] == "0":
-            self.mate_server_port = int(self.mate_server_proc.stdout.readline().strip())
-            has_f = False
-            out = None
-            if self.config.has_option("MATE_SERVER", "log") and sv_conf["log"] == "yes":
-                self.fs.write(str(self.mate_server_port) + "\n")
-                has_f = True
-                out = self.fs
-            else:
-                print(self.mate_server_port)
-            start_new_thread(cont_log, (self.mate_server_proc.stdout, has_f, out))
-            self.set_port_for_mate()
+            
+        mate_server_config = self.read_mate_server_properties()
+        
+        if mate_server_config is not None:
+        
+            if mate_server_config.has_option("DEFAULT", "port"):
+                self.mate_server_port = int(mate_server_config["DEFAULT"]["port"])
+                
+                if self.mate_server_port == 0:
+                    # the mate server prints the actual port to stdout (first line)
+                    self.mate_server_port = int(self.mate_server_proc.stdout.readline().strip())
+
+                # share the port to mate
+                self.set_port_for_mate() 
+                
+        has_f = False
+        out = None
+
+        # redirect stdout of mate server to log file
+        if self.config.has_option("MATE_SERVER", "log") and sv_conf["log"] == "yes":
+            has_f = True
+            out = self.fs
+        
+        # log to file or stdout depending on configuration
+        start_new_thread(cont_log, (self.mate_server_proc.stdout, True, self.fs))
 
     def set_port_for_mate(self):
         exec_str = str.encode('run-as org.mate\ncd /data/user/0/org.mate\nmkdir files\ncd files\necho ' + str(self.mate_server_port) + ' > port\nexit\nexit\n', 'ascii')
@@ -371,7 +387,7 @@ class Commander:
         print("Done")
 
     def run_mate_tests(self, flag):
-        print("Wait for app to finish staring up...")
+        print("Wait for app to finish starting up...")
         sleep(float(self.config['MATE']['wait_for_app']))
         print("Running tests...")
         package = self.config['APP']['ID']
@@ -382,7 +398,6 @@ class Commander:
         self.test_command = ['adb', "-s", self.emu_name, 'shell', 'am', 'instrument', '-w', '-r', '-e', 'debug', 
 'false', '-e', 'jacoco', 'false', '-e', 'packageName', package, '-e', 
 'class', "'org.mate." + strategy + "'", 'org.mate.test/android.support.test.runner.AndroidJUnitRunner']
-        # print(self.test_command)
         p = subprocess.run(self.test_command, stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE)
         out, err = p.stdout.decode("utf-8").strip(), p.stderr.decode("utf-8").strip()
@@ -449,6 +464,7 @@ if __name__ == "__main__":
             flag = sys.argv[2]
 
         print("Flags: " + str(flag))
+
         com.install_dependencies(apk)
         com.run_mate_server()
         com.run_app()
