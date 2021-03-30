@@ -7,8 +7,8 @@ MATE_COMMANDER_HOME="C:\\Users\\Michael\\git\\mate-commander"
 
 # build MATE APKs
 cd $MATE_HOME
-TERM=cygwin ./gradlew assembleDebug
-TERM=cygwin ./gradlew assembleAndroidTest
+./gradlew assembleDebug
+./gradlew assembleAndroidTest
 
 # copy MATE APKs into mate-commander
 cd $MATE_COMMANDER_HOME
@@ -17,7 +17,7 @@ cp $MATE_HOME\\app\\build\\outputs\\apk\\debug\\app-debug.apk app-debug.apk
 
 # build MATE-Server jar
 cd $MATE_SERVER_HOME
-TERM=cygwin ./gradlew fatJar
+./gradlew fatJar
 
 # copy MATE-Server jar into mate-commander
 cd $MATE_COMMANDER_HOME
