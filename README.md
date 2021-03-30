@@ -66,7 +66,6 @@ This should produce an output similar to the following:
 ```
 $ ./commander.py apps/com.zola.bmi.apk
 Using Emulator
-Running headless
 Emulator logging enabled. Logging to log/emu.log and log/emu_err.log
 Starting Emulator...
 Emulator invoked!
