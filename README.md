@@ -19,6 +19,8 @@ MATE_COMMANDER_HOME="C:\\Users\\Michael\\git\\mate-commander"
 ```
 
 Now, run `buildMATE.sh`. This will build and copy the relevant artifacts (apks, jar) into `MATE_COMMANDER_HOME`.
+NOTE: Java 15 is incompatible with the gradle version of MATE. You can use some older Java version by specifying
+`-Dorg.gradle.java.home="C:\\Program Files\\Java\\jdk-11"` when running the gradle commands.
 
 The next step is to adjust the configuration file `config.ini` as follows:
 
@@ -60,6 +62,8 @@ the path of the APK as a command line argument.
 
 Finally, you can invoke the `commander.py` as follows:
 `python3 commander.py apps/<package-name>.apk`
+
+NOTE: If you encounter permissions issues related to `python/python3`, prepend the command with `winpty`.
 
 This should produce an output similar to the following:
 
