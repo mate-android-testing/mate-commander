@@ -3,9 +3,12 @@
 # zipalign=$ANDROID_HOME/build-tools/30.0.2/zipalign
 zipalign -p 4 $1 $1.aligned
 
-# zipalign doesn't work in place :(
-mv $1.aligned $1
+# there is a bug with zipalign, we need two iterations, see: https://stackoverflow.com/questions/38047358/zipalign-verification-failed-resources-arsc-bad-1
+zipalign -f -p 4 $1.aligned $1.aligned2
 
+# zipalign doesn't work in place :(
+rm $1.aligned
+mv $1.aligned2 $1
 
 # apksigner=$ANDROID_HOME/build-tools/30.0.2/apksigner.bat
 apksigner sign --ks "C:\Program Files\Java\jdk1.8.0_131\jre\bin\KeyStore.jks" --ks-key-alias "mydomain" --ks-pass pass:123456  $1
