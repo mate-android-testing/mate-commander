@@ -1,8 +1,5 @@
 #!/bin/bash
 
-# $1 = emu_name
-# $2 = app_id
-# adb -s $1 root
 adb -s $1 push "mediafiles/mateTestBmp.bmp" "sdcard/mateTestBmp.bmp"
 adb -s $1 push "mediafiles/mateTestGif.gif" "sdcard/mateTestGif.gif"
 adb -s $1 push "mediafiles/mateTestJpg.jpg" "sdcard/mateTestJpg.jpg"
