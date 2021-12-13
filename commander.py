@@ -352,8 +352,18 @@ class Commander:
         out, err = p.stdout.decode("utf-8").strip(), p.stderr.decode("utf-8").strip()              
         print(out)                  
         print(err)               
-        print("Done") 
-        
+        print("Done")
+
+    def push_static_strings(self):
+        print("Pushing Static Strings onto app-internal storage of MATE...")
+        cmd = "bash.exe --login -i -c" + " " + "'./push-staticStrings.sh" + " " + self.config['APP']['ID'] + "'"
+        print(cmd)
+        p = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        out, err = p.stdout.decode("utf-8").strip(), p.stderr.decode("utf-8").strip()
+        print(out)
+        print(err)
+        print("Done")
+
     def push_media_files(self):
         print("Pushing MediaFiles onto external storage...")
         cmd = "bash.exe --login -i -c" + " " + "'./push-mediafiles.sh" + " " + self.emu_name + "'"   
