@@ -63,7 +63,9 @@ the path of the APK as a command line argument.
 Finally, you can invoke the `commander.py` as follows:
 `python3 commander.py apps/<package-name>.apk`
 
-NOTE: If you encounter permissions issues related to `python/python3`, prepend the command with `winpty`.
+NOTE: If you encounter permissions issues related to `python/python3`, prepend the command with `winpty`. If the output
+shows a 'adb not found' log, then ensure that `adb` is really on the `PATH` and/or append the flag `shell=True` to the
+respective `subprocess.run()` invocation within `commander.py`!
 
 This should produce an output similar to the following:
 
