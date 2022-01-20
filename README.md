@@ -2,13 +2,14 @@
 
 The minimal requirements are:
 
+* You need at least Java 11 and `JAVA_HOME` needs to exported to the `PATH`.
 * You need an Android SDK and an emulator, both come bundled with Android-Studio.
 * You need a bash on Windows, see https://gitforwindows.org/.
 * The binary bash.exe needs to be on the `PATH`.
 * The binary adb.exe needs to be on the `PATH`.
 * `ANDROID_HOME` need to be set and be on the `PATH`.
-* A copy of MATE, see https://gitlab.infosun.fim.uni-passau.de/se2/mate/mate.
-* A copy of MATE-Server, see https://gitlab.infosun.fim.uni-passau.de/se2/mate/mate-server.
+* A copy of MATE, see https://github.com/mate-android-testing/mate.
+* A copy of MATE-Server, see https://github.com/mate-android-testing/mate-server.
 
 Then, you need to adjust the paths within `buildMATE.sh`, e.g.:
 
@@ -19,8 +20,8 @@ MATE_COMMANDER_HOME="C:\\Users\\Michael\\git\\mate-commander"
 ```
 
 Now, run `buildMATE.sh`. This will build and copy the relevant artifacts (apks, jar) into `MATE_COMMANDER_HOME`.
-NOTE: Java 15 is incompatible with the gradle version of MATE. You can use some older Java version by specifying
-`-Dorg.gradle.java.home="C:\\Program Files\\Java\\jdk-11"` when running the gradle commands.
+NOTE: If your Java version is incompatible with the gradle version of MATE, you can use some older Java version by 
+specifying `-Dorg.gradle.java.home="C:\\Program Files\\Java\\jdk-11"` when running the gradle commands.
 
 The next step is to adjust the configuration file `config.ini` as follows:
 
