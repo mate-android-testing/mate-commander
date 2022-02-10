@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<root name="myroot">
+    <child name="mychild" id="5">
+        <grandchild name="mygrandchild" id="6">
+            blah
+        </grandchild>
+    </child>
+    <child name="mchild" id="7">
+        <grandchild name="mgrandchild" id="8">
+            blah
+        </grandchild>
+    </child>
+    <child name="blahchild" id="9">
+        <grandchild name="blahgrandchild" id="9">
+            blah
+        </grandchild>
+    </child>
+</root>
