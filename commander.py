@@ -178,41 +178,19 @@ class Commander:
         print(err)
         print("Done")
 
-        self.push_mate_command = ["adb", "-s", self.emu_name, "push", "app-debug.apk", "/data/local/tmp/org.mate"]
+        print("Installing mate client...")
+        self.install_mate_client_command = ["adb", "-s", self.emu_name, "install", "client-debug.apk"]
 
-        print("Pushing mate...")
-        p = subprocess.run(self.push_mate_command, stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE)
+        p = subprocess.run(self.install_mate_client_command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         out, err = p.stdout.decode("utf-8").strip(), p.stderr.decode("utf-8").strip()
         print(out)
         print(err)
         print("Done")
 
-        self.install_mate_command = ["adb", "-s", self.emu_name, "shell", "pm", "install", "-t", "-r", "/data/local/tmp/org.mate"]
+        print("Installing mate representation-layer...")
+        self.install_mate_representation_layer_command = ["adb", "-s", self.emu_name, "install", "representation-debug-androidTest.apk"]
 
-        print("Installing mate...")
-        p = subprocess.run(self.install_mate_command, stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE)
-        out, err = p.stdout.decode("utf-8").strip(), p.stderr.decode("utf-8").strip()
-        print(out)
-        print(err)
-        print("Done")
-
-        self.push_mate_test_command = ["adb", "-s", self.emu_name, "push", "app-debug-androidTest.apk", "/data/local/tmp/org.mate.test"]
-
-        print("Pushing mate tests...")
-        p = subprocess.run(self.push_mate_test_command, stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE)
-        out, err = p.stdout.decode("utf-8").strip(), p.stderr.decode("utf-8").strip()
-        print(out)
-        print(err)
-        print("Done")
-
-        self.install_mate_test_command = ["adb", "-s", self.emu_name, "shell", "pm", "install", "-t", "-r", "/data/local/tmp/org.mate.test"]
-
-        print("Installing mate tests...")
-        p = subprocess.run(self.install_mate_test_command, stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE)
+        p = subprocess.run(self.install_mate_representation_layer_command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         out, err = p.stdout.decode("utf-8").strip(), p.stderr.decode("utf-8").strip()
         print(out)
         print(err)
@@ -394,20 +372,28 @@ class Commander:
         print(err)
         print("Done")
 
+    def convert_strategy(self, strategy : str):
+        """Converts the old strategy name of the form ExecuteMATE<strategy> to <strategy>"""
+        return strategy.removeprefix("ExecuteMATE")
+
     def run_mate_tests(self, flag):
         print("Wait for app to finish starting up...")
         sleep(float(self.config['MATE']['wait_for_app']))
         print("Running tests...")
         package = self.config['APP']['ID']
-        strategy = self.config['MATE']['test']
-        if "replay" in flag:
-            strategy = "ExecuteMATEReplayRun"
+        strategy = self.convert_strategy(self.config['MATE']['test'])
 
-        self.test_command = ['adb', "-s", self.emu_name, 'shell', 'am', 'instrument', '-w', '-r', '-e', 'debug', 
-'false', '-e', 'jacoco', 'false', '-e', 'packageName', package, '-e', 
-'class', "'org.mate." + strategy + "'", 'org.mate.test/android.support.test.runner.AndroidJUnitRunner']
-        p = subprocess.run(self.test_command, stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE)
+        if "replay" in flag:
+            strategy = "ReplayRun"
+
+        # only available for API 26+, see https://stackoverflow.com/questions/7415997/how-to-start-and-stop-android-service-from-a-adb-shell/52312482#52312482
+        #self.test_command = ["adb", "-s", self.emu_name, "shell", "am", "start-foreground-service", "-n",
+        #                     "org.mate/.service.MATEService", "-e", "packageName", package, "-e", "algorithm", strategy]
+
+        self.test_command = ["adb", "-s", self.emu_name, "shell", "am", "startservice", "-n",
+                              "org.mate/.service.MATEService", "-e", "packageName", package, "-e", "algorithm", strategy]
+
+        p = subprocess.run(self.test_command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         out, err = p.stdout.decode("utf-8").strip(), p.stderr.decode("utf-8").strip()
         print(out)
         print(err)
