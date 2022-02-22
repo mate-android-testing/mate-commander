@@ -328,7 +328,7 @@ class Commander:
         print("Pushing list of system events onto app-internal storage of MATE...")
         cmd = "bash.exe --login -i -c" + " " + "'./push-systemEvents.sh" + " " + self.config['APP']['ID'] + "'"   
         print(cmd)        
-        p = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)    
+        p = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
         out, err = p.stdout.decode("utf-8").strip(), p.stderr.decode("utf-8").strip()             
         print(out)                
         print(err)              
@@ -338,7 +338,7 @@ class Commander:
         print("Pushing Manifest onto app-internal storage of MATE...")
         cmd = "bash.exe --login -i -c" + " " + "'./push-manifest.sh" + " " + self.config['APP']['ID'] + "'"   
         print(cmd)        
-        p = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)    
+        p = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
         out, err = p.stdout.decode("utf-8").strip(), p.stderr.decode("utf-8").strip()             
         print(out)                
         print(err)              
@@ -348,7 +348,7 @@ class Commander:
         print("Pushing Static Info onto app-internal storage of MATE...")           
         cmd = "bash.exe --login -i -c" + " " + "'./push-staticInfo.sh" + " " + self.config['APP']['ID'] + "'"  
         print(cmd)  
-        p = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)               
+        p = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
         out, err = p.stdout.decode("utf-8").strip(), p.stderr.decode("utf-8").strip()              
         print(out)                  
         print(err)               
@@ -358,7 +358,7 @@ class Commander:
         print("Pushing Static Strings onto app-internal storage of MATE...")
         cmd = "bash.exe --login -i -c" + " " + "'./push-staticStrings.sh" + " " + self.config['APP']['ID'] + "'"
         print(cmd)
-        p = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        p = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
         out, err = p.stdout.decode("utf-8").strip(), p.stderr.decode("utf-8").strip()
         print(out)
         print(err)
@@ -368,7 +368,7 @@ class Commander:
         print("Pushing MediaFiles onto external storage...")
         cmd = "bash.exe --login -i -c" + " " + "'./push-mediafiles.sh" + " " + self.emu_name + "'"   
         print(cmd)        
-        p = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)    
+        p = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
         out, err = p.stdout.decode("utf-8").strip(), p.stderr.decode("utf-8").strip()             
         print(out)                
         print(err)              
@@ -378,7 +378,7 @@ class Commander:
         print("Pushing recorded Test Cases onto Emulator...")
         cmd = "bash.exe --login -i -c" + " " + "'./push-testcases.sh" + " " + self.config['APP']['ID'] + "'"
         print(cmd)
-        p = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        p = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
         out, err = p.stdout.decode("utf-8").strip(), p.stderr.decode("utf-8").strip()
         print(out)
         print(err)
@@ -388,7 +388,7 @@ class Commander:
         print("Fetching recorded Test Cases from emulator...")
         cmd = "bash.exe --login -i -c" + " " + "'./fetch-testcases.sh" + " " + self.config['APP']['ID'] + "'"
         print(cmd)
-        p = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        p = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
         out, err = p.stdout.decode("utf-8").strip(), p.stderr.decode("utf-8").strip()
         print(out)
         print(err)
@@ -417,7 +417,7 @@ class Commander:
         print("Closing emulator...")
         cmd = "bash.exe --login -i -c" + " " + "'adb -s " + self.emu_name + " emu kill'"
         print(cmd)
-        p = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        p = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
         out, err = p.stdout.decode("utf-8").strip(), p.stderr.decode("utf-8").strip()
         print(out)
         print(err)
@@ -427,7 +427,7 @@ class Commander:
         print("Restarting ADB as root...")
         cmd = "bash.exe --login -i -c" + " " + "'adb -s " + self.emu_name + " root'"
         print(cmd)
-        p = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        p = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
         out, err = p.stdout.decode("utf-8").strip(), p.stderr.decode("utf-8").strip()
         print(out)
         print(err)
