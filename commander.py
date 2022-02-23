@@ -154,8 +154,7 @@ class Commander:
         check_out = subprocess.run(self.check_command, stdout=subprocess.PIPE, stderr=subprocess.PIPE).stdout.decode("utf-8").strip()
         while check_out != "1":
             sleep(0.2)
-            check_out = subprocess.run(self.check_command, stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE).stdout.decode("utf-8").strip()
+            check_out = subprocess.run(self.check_command, stdout=subprocess.PIPE, stderr=subprocess.PIPE).stdout.decode("utf-8").strip()
         print("Emulator online!")
 
     def install_dependencies(self,apk):
@@ -169,8 +168,7 @@ class Commander:
         self.config["APP"]["id"] = os.path.split(apk)[1].split(".apk")[0]
 
         print("Installing app: " + self.config["APP"]["id"] + ".apk" + "...")
-        p = subprocess.run(self.install_app_command, stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE)
+        p = subprocess.run(self.install_app_command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         out, err = p.stdout.decode("utf-8").strip(), p.stderr.decode("utf-8").strip()
         print(out)
         print(err)
@@ -195,21 +193,17 @@ class Commander:
         print("Done")
 
         self.create_files_dir()
-        
-    def grant_permission(self):
-        print("Granting read/write permission for external storage...")
-        self.app_command = ['adb', "-s", self.emu_name, 'shell', 'pm', 'grant', self.config['APP']['id'], 'android.permission.READ_EXTERNAL_STORAGE']
-        cmd = "adb -s " + self.emu_name + " shell pm grant" + " " + self.config['APP']['ID'] + " " + "android.permission.READ_EXTERNAL_STORAGE"
-        print(cmd)
-        p = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
+    def grant_runtime_permissions(self, package):
+        print("Granting read/write runtime permissions for external storage...")
+        self.read_permission_command = ['adb', "-s", self.emu_name, 'shell', 'pm', 'grant', package, 'android.permission.READ_EXTERNAL_STORAGE']
+        p = subprocess.run(self.read_permission_command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         out, err = p.stdout.decode("utf-8").strip(), p.stderr.decode("utf-8").strip()
         print(out)
         print(err)
-        
-        self.app_command = ['adb', "-s", self.emu_name, 'shell', 'pm', 'grant', self.config['APP']['id'], 'android.permission.WRITE_EXTERNAL_STORAGE']
-        cmd = "adb -s " + self.emu_name + " shell pm grant" + " " + self.config['APP']['ID'] + " " + "android.permission.WRITE_EXTERNAL_STORAGE"
-        print(cmd)
-        p = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
+        self.write_permission_command = ['adb', "-s", self.emu_name, 'shell', 'pm', 'grant', package, 'android.permission.WRITE_EXTERNAL_STORAGE']
+        p = subprocess.run(self.write_permission_command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         out, err = p.stdout.decode("utf-8").strip(), p.stderr.decode("utf-8").strip()
         print(out)
         print(err)
@@ -448,6 +442,7 @@ if __name__ == "__main__":
         print("Flags: " + str(flag))
 
         com.install_dependencies(apk)
+        com.grant_runtime_permissions("org.mate")
         com.run_mate_server()
         com.run_app()
         com.adb_root()
