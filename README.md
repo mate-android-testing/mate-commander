@@ -3,6 +3,7 @@
 The minimal requirements are:
 
 * You need at least Java 11 and `JAVA_HOME` needs to exported to the `PATH`.
+* You need a working `python3` installation.
 * You need an Android SDK and an emulator, both come bundled with Android-Studio.
 * You need a bash on Windows, see https://gitforwindows.org/.
 * The binary bash.exe needs to be on the `PATH`.
@@ -19,7 +20,8 @@ MATE_SERVER_HOME="C:\\Users\\Michael\\git\\mate-server"
 MATE_COMMANDER_HOME="C:\\Users\\Michael\\git\\mate-commander"
 ```
 
-Now, run `buildMATE.sh`. This will build and copy the relevant artifacts (apks, jar) into `MATE_COMMANDER_HOME`.
+Now, run `buildMATE.sh <package-name>`. This will build and copy the relevant artifacts (apks, jar) into `MATE_COMMANDER_HOME`.
+Look at the notes below for obtaining the package name of the AUT.
 NOTE: If your Java version is incompatible with the gradle version of MATE, you can use some older Java version by 
 specifying `-Dorg.gradle.java.home="C:\\Program Files\\Java\\jdk-11"` when running the gradle commands.
 
@@ -56,8 +58,8 @@ Optional steps:
 * It is handy to have the `apktool` installed, see https://ibotpeaches.github.io/Apktool/. You can run
 `apktool d <path-to-apk> -o <output-folder> -f` to decode an APK. Then, you can read for instance the package
 name from the file `AndroidManifest.xml`, it's within the first few lines.
-* It is also wise to have a keystore for signing APKs. This step is mandatory whenever you modify an APK,
-e.g. instrument it with coverage information. Follow the steps at https://stackoverflow.com/questions/10930331/how-to-sign-an-already-compiled-apk.
+* It is also wise to have a keystore for signing APKs (right now `signAPK.sh` is using Android's default debugging keystore). 
+  This step is mandatory whenever you modify an APK, e.g. instrument it with coverage information. Follow the steps at https://stackoverflow.com/questions/10930331/how-to-sign-an-already-compiled-apk.
 Once you have a keystore, you need to adjust the file `signAPK.sh`. After that, you can sign an APK by supplying
 the path of the APK as a command line argument.
 
@@ -85,19 +87,13 @@ Performing Streamed Install
 Success
 
 Done
-Pushing mate...
-app-debug.apk: 1 file pushed, 0 skipped. 776.7 MB/s (3947580 bytes in 0.005s)
-
-Done
-Installing mate...
+Installing mate client...
+Performing Streamed Install
 Success
 
 Done
-Pushing mate tests...
-app-debug-androidTest.apk: 1 file pushed, 0 skipped. 579.2 MB/s (1871063 bytes in 0.003s)
-
-Done
-Installing mate tests...
+Installing mate representation-layer...
+Performing Streamed Install
 Success
 
 Done
@@ -113,33 +109,10 @@ Done
 Restarting ADB as root...
 bash.exe --login -i -c 'adb -s emulator-5554 root'
 
-
 Done
 Wait for app to finish starting up...
 Running tests...
-INSTRUMENTATION_STATUS: numtests=1
-INSTRUMENTATION_STATUS: stream=
-org.mate.ExecuteMATERandomExploration:
-INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
-INSTRUMENTATION_STATUS: test=useAppContext
-INSTRUMENTATION_STATUS: class=org.mate.ExecuteMATERandomExploration
-INSTRUMENTATION_STATUS: current=1
-INSTRUMENTATION_STATUS_CODE: 1
-INSTRUMENTATION_STATUS: numtests=1
-INSTRUMENTATION_STATUS: stream=.
-INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
-INSTRUMENTATION_STATUS: test=useAppContext
-INSTRUMENTATION_STATUS: class=org.mate.ExecuteMATERandomExploration
-INSTRUMENTATION_STATUS: current=1
-INSTRUMENTATION_STATUS_CODE: 0
-INSTRUMENTATION_RESULT: stream=
-
-Time: 217.188
-
-OK (1 test)
-
-
-INSTRUMENTATION_CODE: -1
+Starting service: Intent { cmp=org.mate/.service.MATEService (has extras) }
 
 Done
 Closing emulator...
@@ -156,6 +129,7 @@ If there is any error, you can check the logs produced by `MATE` and `MATE-Serve
 ```
 cat log/emu.log | grep "E acc"
 cat log/emu.log | grep "apptest"
+cat log/emu.log | grep "MATE_SERVICE"
 cat log/emu_err.log
 cat log/server.log
 cat log/server_err.log
