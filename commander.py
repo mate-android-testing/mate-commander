@@ -101,8 +101,7 @@ class Commander:
             return
         self.create_avd_command = [str(Path(emu_conf["avdmanager_command"]).expanduser()), "create", "avd", "--force", "--name", emu_conf["device_id"], "--abi", "google_apis/x86", "--package", "system-images;android-25;google_apis;x86"]
         print("Creating AVD...")
-        p = subprocess.run(self.create_avd_command, stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE, input=b'\n')
+        p = subprocess.run(self.create_avd_command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, input=b'\n')
         out, err = p.stdout.decode("utf-8").strip(), p.stderr.decode("utf-8").strip()
         print(out)
         print(err)
@@ -152,8 +151,7 @@ class Commander:
         self.emu_name = "emulator-" + self.emu_name
         print("Emulator: " + self.emu_name)
         self.check_command = ["adb", "-s", self.emu_name, "shell", "getprop", "sys.boot_completed"]
-        check_out = subprocess.run(self.check_command, stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE).stdout.decode("utf-8").strip()
+        check_out = subprocess.run(self.check_command, stdout=subprocess.PIPE, stderr=subprocess.PIPE).stdout.decode("utf-8").strip()
         while check_out != "1":
             sleep(0.2)
             check_out = subprocess.run(self.check_command, stdout=subprocess.PIPE,
@@ -225,8 +223,7 @@ class Commander:
         self.app_command = ['adb', "-s", self.emu_name, 'shell', 'pm', 'grant', self.config['APP']['id'], 'android.permission.READ_EXTERNAL_STORAGE']
         cmd = "adb -s " + self.emu_name + " shell pm grant" + " " + self.config['APP']['ID'] + " " + "android.permission.READ_EXTERNAL_STORAGE"
         print(cmd)
-        p = subprocess.run(cmd, stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE)
+        p = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         out, err = p.stdout.decode("utf-8").strip(), p.stderr.decode("utf-8").strip()
         print(out)
         print(err)
@@ -234,8 +231,7 @@ class Commander:
         self.app_command = ['adb', "-s", self.emu_name, 'shell', 'pm', 'grant', self.config['APP']['id'], 'android.permission.WRITE_EXTERNAL_STORAGE']
         cmd = "adb -s " + self.emu_name + " shell pm grant" + " " + self.config['APP']['ID'] + " " + "android.permission.WRITE_EXTERNAL_STORAGE"
         print(cmd)
-        p = subprocess.run(cmd, stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE)
+        p = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         out, err = p.stdout.decode("utf-8").strip(), p.stderr.decode("utf-8").strip()
         print(out)
         print(err)
@@ -244,8 +240,7 @@ class Commander:
     def run_app(self):
         print("Starting app...")
         self.app_command = ['adb', "-s", self.emu_name, 'shell', 'monkey', '-p', self.config['APP']['id'], '1']
-        p = subprocess.run(self.app_command, stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE)
+        p = subprocess.run(self.app_command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         out, err = p.stdout.decode("utf-8").strip(), p.stderr.decode("utf-8").strip()
         print(out)
         print(err)
@@ -319,7 +314,7 @@ class Commander:
     def create_files_dir(self):
         print("Creating files dir")
         pkg_name = self.config['APP']['ID']
-        exec_str = str.encode('run-as ' + pkg_name+ '\nmkdir files\nexit\nexit\n', 'ascii')
+        exec_str = str.encode('run-as ' + pkg_name + '\nmkdir files\nexit\nexit\n', 'ascii')
         self.set_port_for_mate_command = ['adb', "-s", self.emu_name, 'shell']
         subprocess.run(self.set_port_for_mate_command, input=exec_str)
         print("Done.")
@@ -328,7 +323,7 @@ class Commander:
         print("Pushing list of system events onto app-internal storage of MATE...")
         cmd = "bash.exe --login -i -c" + " " + "'./push-systemEvents.sh" + " " + self.config['APP']['ID'] + "'"   
         print(cmd)        
-        p = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)    
+        p = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
         out, err = p.stdout.decode("utf-8").strip(), p.stderr.decode("utf-8").strip()             
         print(out)                
         print(err)              
@@ -338,7 +333,7 @@ class Commander:
         print("Pushing Manifest onto app-internal storage of MATE...")
         cmd = "bash.exe --login -i -c" + " " + "'./push-manifest.sh" + " " + self.config['APP']['ID'] + "'"   
         print(cmd)        
-        p = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)    
+        p = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
         out, err = p.stdout.decode("utf-8").strip(), p.stderr.decode("utf-8").strip()             
         print(out)                
         print(err)              
@@ -348,7 +343,7 @@ class Commander:
         print("Pushing Static Info onto app-internal storage of MATE...")           
         cmd = "bash.exe --login -i -c" + " " + "'./push-staticInfo.sh" + " " + self.config['APP']['ID'] + "'"  
         print(cmd)  
-        p = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)               
+        p = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
         out, err = p.stdout.decode("utf-8").strip(), p.stderr.decode("utf-8").strip()              
         print(out)                  
         print(err)               
@@ -358,7 +353,7 @@ class Commander:
         print("Pushing Static Strings onto app-internal storage of MATE...")
         cmd = "bash.exe --login -i -c" + " " + "'./push-staticStrings.sh" + " " + self.config['APP']['ID'] + "'"
         print(cmd)
-        p = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        p = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
         out, err = p.stdout.decode("utf-8").strip(), p.stderr.decode("utf-8").strip()
         print(out)
         print(err)
@@ -368,7 +363,7 @@ class Commander:
         print("Pushing MediaFiles onto external storage...")
         cmd = "bash.exe --login -i -c" + " " + "'./push-mediafiles.sh" + " " + self.emu_name + "'"   
         print(cmd)        
-        p = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)    
+        p = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
         out, err = p.stdout.decode("utf-8").strip(), p.stderr.decode("utf-8").strip()             
         print(out)                
         print(err)              
@@ -378,7 +373,7 @@ class Commander:
         print("Pushing recorded Test Cases onto Emulator...")
         cmd = "bash.exe --login -i -c" + " " + "'./push-testcases.sh" + " " + self.config['APP']['ID'] + "'"
         print(cmd)
-        p = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        p = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
         out, err = p.stdout.decode("utf-8").strip(), p.stderr.decode("utf-8").strip()
         print(out)
         print(err)
@@ -388,7 +383,7 @@ class Commander:
         print("Fetching recorded Test Cases from emulator...")
         cmd = "bash.exe --login -i -c" + " " + "'./fetch-testcases.sh" + " " + self.config['APP']['ID'] + "'"
         print(cmd)
-        p = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        p = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
         out, err = p.stdout.decode("utf-8").strip(), p.stderr.decode("utf-8").strip()
         print(out)
         print(err)
@@ -417,7 +412,7 @@ class Commander:
         print("Closing emulator...")
         cmd = "bash.exe --login -i -c" + " " + "'adb -s " + self.emu_name + " emu kill'"
         print(cmd)
-        p = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        p = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
         out, err = p.stdout.decode("utf-8").strip(), p.stderr.decode("utf-8").strip()
         print(out)
         print(err)
@@ -427,7 +422,7 @@ class Commander:
         print("Restarting ADB as root...")
         cmd = "bash.exe --login -i -c" + " " + "'adb -s " + self.emu_name + " root'"
         print(cmd)
-        p = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        p = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
         out, err = p.stdout.decode("utf-8").strip(), p.stderr.decode("utf-8").strip()
         print(out)
         print(err)
