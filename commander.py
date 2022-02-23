@@ -176,41 +176,19 @@ class Commander:
         print(err)
         print("Done")
 
-        self.push_mate_command = ["adb", "-s", self.emu_name, "push", "app-debug.apk", "/data/local/tmp/org.mate"]
-
-        print("Pushing mate...")
-        p = subprocess.run(self.push_mate_command, stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE)
-        out, err = p.stdout.decode("utf-8").strip(), p.stderr.decode("utf-8").strip()
-        print(out)
-        print(err)
-        print("Done")
-
-        self.install_mate_command = ["adb", "-s", self.emu_name, "shell", "pm", "install", "-t", "-r", "/data/local/tmp/org.mate"]
-
         print("Installing mate...")
-        p = subprocess.run(self.install_mate_command, stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE)
+        self.install_mate_command = ["adb", "-s", self.emu_name, "install", "app-debug.apk"]
+
+        p = subprocess.run(self.install_mate_command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         out, err = p.stdout.decode("utf-8").strip(), p.stderr.decode("utf-8").strip()
         print(out)
         print(err)
         print("Done")
-
-        self.push_mate_test_command = ["adb", "-s", self.emu_name, "push", "app-debug-androidTest.apk", "/data/local/tmp/org.mate.test"]
-
-        print("Pushing mate tests...")
-        p = subprocess.run(self.push_mate_test_command, stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE)
-        out, err = p.stdout.decode("utf-8").strip(), p.stderr.decode("utf-8").strip()
-        print(out)
-        print(err)
-        print("Done")
-
-        self.install_mate_test_command = ["adb", "-s", self.emu_name, "shell", "pm", "install", "-t", "-r", "/data/local/tmp/org.mate.test"]
 
         print("Installing mate tests...")
-        p = subprocess.run(self.install_mate_test_command, stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE)
+        self.install_mate_tests_command = ["adb", "-s", self.emu_name, "install", "app-debug-androidTest.apk"]
+
+        p = subprocess.run(self.install_mate_tests_command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         out, err = p.stdout.decode("utf-8").strip(), p.stderr.decode("utf-8").strip()
         print(out)
         print(err)
@@ -312,6 +290,8 @@ class Commander:
         subprocess.run(self.set_port_for_mate_command, input=exec_str)
 
     def create_files_dir(self):
+        # TODO: this seems to be only necessary for the manually-instrumented line coverage APKs
+        # this only works if the AUT is debuggable
         print("Creating files dir")
         pkg_name = self.config['APP']['ID']
         exec_str = str.encode('run-as ' + pkg_name + '\nmkdir files\nexit\nexit\n', 'ascii')
@@ -398,11 +378,10 @@ class Commander:
         if "replay" in flag:
             strategy = "ExecuteMATEReplayRun"
 
-        self.test_command = ['adb', "-s", self.emu_name, 'shell', 'am', 'instrument', '-w', '-r', '-e', 'debug', 
-'false', '-e', 'jacoco', 'false', '-e', 'packageName', package, '-e', 
-'class', "'org.mate." + strategy + "'", 'org.mate.test/android.support.test.runner.AndroidJUnitRunner']
-        p = subprocess.run(self.test_command, stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE)
+        self.test_command = ['adb', "-s", self.emu_name, 'shell', 'am', 'instrument', '-w', '-r', '-e', 'debug', 'false',
+                             '-e', 'jacoco', 'false', '-e', 'packageName', package, '-e', 'class',
+                             "'org.mate." + strategy + "'", 'org.mate.test/android.support.test.runner.AndroidJUnitRunner']
+        p = subprocess.run(self.test_command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         out, err = p.stdout.decode("utf-8").strip(), p.stderr.decode("utf-8").strip()
         print(out)
         print(err)
