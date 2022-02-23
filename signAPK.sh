@@ -11,7 +11,9 @@ rm $1.aligned
 mv $1.aligned2 $1
 
 # apksigner=$ANDROID_HOME/build-tools/30.0.2/apksigner.bat
-apksigner sign --ks "C:\Program Files\Java\jdk1.8.0_131\jre\bin\KeyStore.jks" --ks-key-alias "mydomain" --ks-pass pass:123456  $1
+apksigner sign --ks ~/.android/debug.keystore --ks-key-alias androiddebugkey --ks-pass pass:android --key-pass pass:android $1
+# alternatively create your own keystore: https://stackoverflow.com/questions/3997748/how-can-i-create-a-keystore
+# apksigner sign --ks "C:\Program Files\Java\jdk1.8.0_131\jre\bin\KeyStore.jks" --ks-key-alias "mydomain" --ks-pass pass:123456  $1
 
 # remove generated signature file
 rm $1.idsig
