@@ -16,6 +16,10 @@ cd $MATE_COMMANDER_HOME
 cp $MATE_HOME\\app\\build\\outputs\\apk\\androidTest\\debug\\app-debug-androidTest.apk app-debug-androidTest.apk
 cp $MATE_HOME\\app\\build\\outputs\\apk\\debug\\app-debug.apk app-debug.apk
 
+# sign the APKs with the same key as the APK of the AUT
+./signAPK.sh app-debug-androidTest.apk
+./signAPK.sh app-debug.apk
+
 # build MATE-Server jar
 cd $MATE_SERVER_HOME
 ./gradlew fatJar
