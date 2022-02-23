@@ -171,8 +171,7 @@ class Commander:
         self.config["APP"]["id"] = os.path.split(apk)[1].split(".apk")[0]
 
         print("Installing app: " + self.config["APP"]["id"] + ".apk" + "...")
-        p = subprocess.run(self.install_app_command, stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE)
+        p = subprocess.run(self.install_app_command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         out, err = p.stdout.decode("utf-8").strip(), p.stderr.decode("utf-8").strip()
         print(out)
         print(err)
@@ -212,8 +211,7 @@ class Commander:
         self.app_command = ['adb', "-s", self.emu_name, 'shell', 'pm', 'grant', self.config['APP']['id'], 'android.permission.WRITE_EXTERNAL_STORAGE']
         cmd = "adb -s " + self.emu_name + " shell pm grant" + " " + self.config['APP']['ID'] + " " + "android.permission.WRITE_EXTERNAL_STORAGE"
         print(cmd)
-        p = subprocess.run(cmd, stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE)
+        p = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         out, err = p.stdout.decode("utf-8").strip(), p.stderr.decode("utf-8").strip()
         print(out)
         print(err)
@@ -222,8 +220,7 @@ class Commander:
     def run_app(self):
         print("Starting app...")
         self.app_command = ['adb', "-s", self.emu_name, 'shell', 'monkey', '-p', self.config['APP']['id'], '1']
-        p = subprocess.run(self.app_command, stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE)
+        p = subprocess.run(self.app_command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         out, err = p.stdout.decode("utf-8").strip(), p.stderr.decode("utf-8").strip()
         print(out)
         print(err)
