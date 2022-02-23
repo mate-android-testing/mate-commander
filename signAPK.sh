@@ -1,4 +1,4 @@
-#! /bin/sh
+#!/bin/bash
 
 # zipalign=$ANDROID_HOME/build-tools/30.0.2/zipalign
 zipalign -p 4 $1 $1.aligned

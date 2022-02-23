@@ -1,4 +1,4 @@
-#! /bin/sh
+#!/bin/bash
 
 package_name=$1
 APP_DIR="apps/$package_name/"
