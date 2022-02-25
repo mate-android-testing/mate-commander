@@ -476,7 +476,7 @@ if __name__ == "__main__":
         com.install_dependencies(apk)
         com.grant_runtime_permissions("org.mate")
         com.run_mate_server()
-        com.run_app()
+        # com.run_app()
         com.adb_root()
         # it may take some time until ADB is ready in root mode
         sleep(3)
