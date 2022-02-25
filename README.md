@@ -3,6 +3,7 @@
 The minimal requirements are:
 
 * You need at least Java 11 and `JAVA_HOME` needs to exported to the `PATH`.
+* You need a working `python3` installation.
 * You need an Android SDK and an emulator, both come bundled with Android-Studio.
 * You need a bash on Windows, see https://gitforwindows.org/.
 * The binary bash.exe needs to be on the `PATH`.
@@ -19,6 +20,7 @@ MATE_SERVER_HOME="C:\\Users\\Michael\\git\\mate-server"
 MATE_COMMANDER_HOME="C:\\Users\\Michael\\git\\mate-commander"
 ```
 
+Create an empty `bin` folder within the mate-commander directory (this is where the MATE-Server jar will be placed).
 Now, run `buildMATE.sh`. This will build and copy the relevant artifacts (apks, jar) into `MATE_COMMANDER_HOME`.
 NOTE: If your Java version is incompatible with the gradle version of MATE, you can use some older Java version by 
 specifying `-Dorg.gradle.java.home="C:\\Program Files\\Java\\jdk-11"` when running the gradle commands.
@@ -56,8 +58,8 @@ Optional steps:
 * It is handy to have the `apktool` installed, see https://ibotpeaches.github.io/Apktool/. You can run
 `apktool d <path-to-apk> -o <output-folder> -f` to decode an APK. Then, you can read for instance the package
 name from the file `AndroidManifest.xml`, it's within the first few lines.
-* It is also wise to have a keystore for signing APKs. This step is mandatory whenever you modify an APK,
-e.g. instrument it with coverage information. Follow the steps at https://stackoverflow.com/questions/10930331/how-to-sign-an-already-compiled-apk.
+* It is also wise to have a keystore for signing APKs (right now `signAPK.sh` is using Android's default debugging keystore). 
+  This step is mandatory whenever you modify an APK, e.g. instrument it with coverage information. Follow the steps at https://stackoverflow.com/questions/10930331/how-to-sign-an-already-compiled-apk.
 Once you have a keystore, you need to adjust the file `signAPK.sh`. After that, you can sign an APK by supplying
 the path of the APK as a command line argument.
 
