@@ -365,10 +365,10 @@ class Commander:
         """Converts the old strategy name of the form ExecuteMATE<strategy> to <strategy>"""
         return strategy.removeprefix("ExecuteMATE")
 
-    def run_mate_tests(self, flag):
+    def run_mate_service(self, flag):
         print("Wait for app to finish starting up...")
         sleep(float(self.config['MATE']['wait_for_app']))
-        print("Running tests...")
+        print("Starting MATEService...")
         package = self.config['APP']['ID']
         strategy = self.convert_strategy(self.config['MATE']['test'])
 
@@ -376,9 +376,10 @@ class Commander:
             strategy = "ReplayRun"
 
         # only available for API 26+, see https://stackoverflow.com/questions/7415997/how-to-start-and-stop-android-service-from-a-adb-shell/52312482#52312482
-        #self.test_command = ["adb", "-s", self.emu_name, "shell", "am", "start-foreground-service", "-n",
+        # self.test_command = ["adb", "-s", self.emu_name, "shell", "am", "start-foreground-service", "-n",
         #                     "org.mate/.service.MATEService", "-e", "packageName", package, "-e", "algorithm", strategy]
 
+        # according to 'adb shell dumpsys activity services <service>' this also starts a foreground service
         self.test_command = ["adb", "-s", self.emu_name, "shell", "am", "startservice", "-n",
                               "org.mate/.service.MATEService", "-e", "packageName", package, "-e", "algorithm", strategy]
 
@@ -386,6 +387,30 @@ class Commander:
         out, err = p.stdout.decode("utf-8").strip(), p.stderr.decode("utf-8").strip()
         print(out)
         print(err)
+
+        # since above command is non-blocking, we should wait at least some time until we fetch the state of the service
+        sleep(1)
+        print("Done")
+
+    def wait_for_mate_service_termination(self):
+        """Since starting the MATEService is non-blocking, we need to poll the emulator every N seconds whether
+        the service is still running."""
+
+        print("Waiting until MATEService has stopped...")
+
+        # we can check whether the mate service is running as follows: adb shell dumpsys activity services <service>
+        # https://stackoverflow.com/questions/10896629/how-to-know-whether-service-is-running-using-adb-shell-in-android
+        self.check_mate_service_command = ["adb", "-s", self.emu_name, "shell", "dumpsys", "activity", "services",
+                                           "org.mate/.service.MATEService"]
+
+        self.service_response = subprocess.run(self.check_mate_service_command, stdout=subprocess.PIPE,
+                                               stderr=subprocess.PIPE, shell=True).stdout.decode("utf-8").strip()
+
+        # poll every 10 seconds whether the service is still running; reports '(nothing)' in case the service is down
+        while self.service_response is None or "(nothing)" not in self.service_response:
+            sleep(10)
+            self.service_response = subprocess.run(self.check_mate_service_command, stdout=subprocess.PIPE,
+                                                   stderr=subprocess.PIPE, shell=True).stdout.decode("utf-8").strip()
         print("Done")
 
     def stop_emulator(self):
@@ -464,7 +489,8 @@ if __name__ == "__main__":
         # com.grant_permission()
         if "replay" in flag:
             com.push_test_cases()
-        com.run_mate_tests(flag)
+        com.run_mate_service(flag)
+        com.wait_for_mate_service_termination()
         if "record" in flag:
             com.fetch_test_cases()
         sleep(5)
