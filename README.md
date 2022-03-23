@@ -47,7 +47,10 @@ https://f-droid.org/en/packages/com.zola.bmi/. The package name for this app is:
 to com.zola.bmi.apk.
 * Create an additional folder also matching the package name within the `apps` folder. For the BMI-Calculator app
 this means a folder named `com.zola.bmi`. This is the place where you put additional resources for certain testing
-strategies or where `MATE` writes coverage information for instance.
+strategies or where `MATE` writes coverage information for instance. Right now, this app specific folder needs to contain
+at least the `AndroidManifest.xml`. Thus, the simplest option is to call `apktool d <packagename>.apk` within the `apps`
+folder and this will produce the required folder, e.g. `com.zola.bmi` for the BMI-Calculator app, containing the 
+`AndroidManifest.xml` file.
 
 All other configurations of `MATE` and `MATE-Server` are controlled by adjusting the properties defined within
 the files `mate.properties` and `mate-server.properties`, respectively. For instance, to control the timeout
