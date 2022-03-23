@@ -136,19 +136,14 @@ class Commander:
             print("Starting Emulator...")
             self.emu_proc = subprocess.Popen(self.emu_command)
         # wait for device to come online
-        print("Emulator invoked!")
-        # on Windows you have to use 'findstr' instead of 'grep' and use the right syntax for paths, e.g. \\ instead of /
-        self.adb_port_command = ["grep", "emulator: control console listening on port ",  "log/emu.log"]
-        # on Windows the option 'shell=True' is necessary to run the command
         self.adb_port_str = "console listening on port "
+        self.adb_port_command = ["grep", self.adb_port_str,  "log/emu.log"]
         self.emu_name = subprocess.run(self.adb_port_command, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                                        shell=True).stdout.decode("utf-8").strip()
         while self.emu_name is None or self.adb_port_str not in self.emu_name:
             sleep(0.2)
-            print("sleeping")
             self.emu_name = subprocess.run(self.adb_port_command, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                                            shell=True).stdout.decode("utf-8").strip()
-        print("Done emulator init!")
         self.emu_name = self.emu_name[len(self.adb_port_str):]
         self.emu_name = re.findall('\d+', self.emu_name)[0]
         self.emu_name = "emulator-" + self.emu_name
