@@ -451,10 +451,10 @@ if __name__ == "__main__":
         com.adb_root()
         # it may take some time until ADB is ready in root mode
         sleep(3)
+        com.push_manifest()
         com.push_static_strings()
         if "intent" in flag:
             com.push_system_events()
-            com.push_manifest()
             com.push_static_info()
             com.push_media_files()
         # com.grant_permission()
