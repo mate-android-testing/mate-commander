@@ -290,7 +290,7 @@ class Commander:
         print("Done.")
 
     def push_system_events(self):
-        print("Pushing list of system events onto app-internal storage of MATE...")
+        print("Pushing list of system events onto external storage...")
         cmd = "bash.exe --login -i -c" + " " + "'./push-systemEvents.sh" + " " + self.config['APP']['ID'] + "'"   
         print(cmd)        
         p = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
@@ -300,7 +300,7 @@ class Commander:
         print("Done") 
 
     def push_manifest(self):
-        print("Pushing Manifest onto app-internal storage of MATE...")
+        print("Pushing Manifest onto external storage...")
         cmd = "bash.exe --login -i -c" + " " + "'./push-manifest.sh" + " " + self.config['APP']['ID'] + "'"   
         print(cmd)        
         p = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
@@ -310,7 +310,7 @@ class Commander:
         print("Done") 
 
     def push_static_info(self):
-        print("Pushing Static Info onto app-internal storage of MATE...")           
+        print("Pushing Static Info onto external storage...")
         cmd = "bash.exe --login -i -c" + " " + "'./push-staticInfo.sh" + " " + self.config['APP']['ID'] + "'"  
         print(cmd)  
         p = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
@@ -320,7 +320,7 @@ class Commander:
         print("Done")
 
     def push_static_strings(self):
-        print("Pushing Static Strings onto app-internal storage of MATE...")
+        print("Pushing Static Strings onto external storage...")
         cmd = "bash.exe --login -i -c" + " " + "'./push-staticStrings.sh" + " " + self.config['APP']['ID'] + "'"
         print(cmd)
         p = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
