@@ -366,17 +366,22 @@ class Commander:
         print(err)
         print("Done")
 
-    def run_mate_tests(self, flag):
+    def run_mate_tests(self, flags):
         print("Wait for app to finish starting up...")
         sleep(float(self.config['MATE']['wait_for_app']))
         print("Running tests...")
         package = self.config['APP']['ID']
         strategy = self.config['MATE']['test']
-        if "replay" in flag:
+        if "replay" in flags:
             strategy = "ExecuteMATEReplayRun"
 
+        # check whether we like to attach a debugger
+        debug = 'false'
+        if "debug" in flags:
+            debug = 'true'
+
         self.test_command = ['adb', "-s", self.emu_name, 'shell', 'am', 'instrument', '-w', '-r', '-e', 'debug', 'false',
-                             '-e', 'jacoco', 'false', '-e', 'packageName', package, '-e', 'class',
+                             '-e', 'jacoco', 'false', '-e', 'wait-for-debugger', debug, '-e', 'packageName', package, '-e', 'class',
                              "'org.mate." + strategy + "'", 'org.mate.test/android.support.test.runner.AndroidJUnitRunner']
         p = subprocess.run(self.test_command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         out, err = p.stdout.decode("utf-8").strip(), p.stderr.decode("utf-8").strip()
@@ -438,11 +443,11 @@ if __name__ == "__main__":
         # the path to the APK file in the apps folder, the APK must follow the convention: <package-name>.apk
         apk = sys.argv[1]
         # optional flag(s): intent|record|replay
-        flag = ""
+        flags = ""
         if len(sys.argv) > 2:
-            flag = sys.argv[2]
+            flags = sys.argv[2]
 
-        print("Flags: " + str(flag))
+        print("Flags: " + str(flags))
 
         com.install_dependencies(apk)
         com.grant_runtime_permissions("org.mate")
@@ -453,15 +458,15 @@ if __name__ == "__main__":
         sleep(3)
         com.push_manifest()
         com.push_static_strings()
-        if "intent" in flag:
+        if "intent" in flags:
             com.push_system_events()
             com.push_static_info()
             com.push_media_files()
         # com.grant_permission()
-        if "replay" in flag:
+        if "replay" in flags:
             com.push_test_cases()
-        com.run_mate_tests(flag)
-        if "record" in flag:
+        com.run_mate_tests(flags)
+        if "record" in flags:
             com.fetch_test_cases()
         sleep(5)
     com.stop()
