@@ -11,8 +11,8 @@ MATE_COMMANDER_HOME="C:\\Users\\Michael\\git\\mate-commander"
 # build MATE APKs
 cd $MATE_HOME
 # if Java 15 is not working, use Java 11, e.g. ./gradlew -Dorg.gradle.java.home="C:\\Program Files\\Java\\jdk-11" assembleDebug
-./gradlew :representation:assembleDebugAndroidTest -PtargetPackage=$packageName
-./gradlew :client:assembleDebug
+./gradlew :representation:clean :representation:assembleDebugAndroidTest -PtargetPackage=$packageName
+./gradlew :client:clean :client:assembleDebug
 
 # copy MATE APKs into mate-commander
 cd $MATE_COMMANDER_HOME
