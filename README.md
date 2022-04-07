@@ -30,7 +30,7 @@ The next step is to adjust the configuration file `config.ini` as follows:
 * Specify the path of the emulator binary under the `[EMULATOR]` section, see the variable `command`.
 * Specify the name of the AVD under the `[EMULATOR]` section, see the variable `device_id`. To create a new
 AVD, open Android-Studio, click on the AVD-Manager and follow the instructions. Check the properties field for
-the name of the AVD. We suggest to use either `Nexus 5` or `Pixel C` with API level 25/28. Note, however,
+the name of the AVD. We suggest to use either `Nexus 5` or `Pixel C` with API level 25/28/29. Note, however,
 that you can't use a Google-PlayStore supported device like `Nexus 5` or `Nexus 5X` together with the suggested
 Google-Play image due to permission issues; you have to fall back to one of the x86 images in this case.
 * Specify the test strategy under the `[MATE]` section, stick to `ExecuteMATERandomExploration` for initial testing.
