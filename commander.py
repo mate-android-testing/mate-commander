@@ -178,7 +178,7 @@ class Commander:
         print("Done")
 
         print("Installing mate...")
-        self.install_mate_command = ["adb", "-s", self.emu_name, "install", "app-debug.apk"]
+        self.install_mate_command = ["adb", "-s", self.emu_name, "install", "-g", "app-debug.apk"]
 
         p = subprocess.run(self.install_mate_command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         out, err = p.stdout.decode("utf-8").strip(), p.stderr.decode("utf-8").strip()
@@ -187,7 +187,7 @@ class Commander:
         print("Done")
 
         print("Installing mate tests...")
-        self.install_mate_tests_command = ["adb", "-s", self.emu_name, "install", "app-debug-androidTest.apk"]
+        self.install_mate_tests_command = ["adb", "-s", self.emu_name, "install", "-g", "app-debug-androidTest.apk"]
 
         p = subprocess.run(self.install_mate_tests_command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         out, err = p.stdout.decode("utf-8").strip(), p.stderr.decode("utf-8").strip()
