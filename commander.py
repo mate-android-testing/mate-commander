@@ -9,23 +9,25 @@ import sys
 import signal
 from _thread import start_new_thread
 
+
 def cont_log(p, hf, f):
     if hf:
         while True:
             line = p.readline().decode('windows-1252')
             if line != '':
-              #the real code does filtering here
-              f.write(line + "\n")
+                # the real code does filtering here
+                f.write(line + "\n")
             else:
-              break
+                break
     else:
         while True:
             line = p.readline().decode()
             if line != '':
-              #the real code does filtering here
-              print(line)
+                # the real code does filtering here
+                print(line)
             else:
-              break
+                break
+
 
 class Commander:
     def __init__(self):
@@ -44,17 +46,17 @@ class Commander:
             if not self.config.has_option('EMULATOR', 'device_id'):
                 valid_config = False
                 print("Missing mandatory EMULATOR options device_id")
-            if ( self.config.has_option("EMULATOR", "log")
-                 and self.config["EMULATOR"]["log"] == "yes"
-                 and not (self.config.has_option('EMULATOR', 'logfile')
-                          and self.config.has_option('EMULATOR', 'logfile_err'))
-               ):
+            if (self.config.has_option("EMULATOR", "log")
+                    and self.config["EMULATOR"]["log"] == "yes"
+                    and not (self.config.has_option('EMULATOR', 'logfile')
+                             and self.config.has_option('EMULATOR', 'logfile_err'))
+            ):
                 valid_config = False
                 print("With emulator log flag active: Missing mandatory EMULATOR options logfile and/or logfile_err")
-            if ( self.config.has_option("EMULATOR", "create_avd")
-                 and self.config["EMULATOR"]["create_avd"] == "yes"
-                 and not self.config.has_option('EMULATOR', 'avdmanager_command')
-               ):
+            if (self.config.has_option("EMULATOR", "create_avd")
+                    and self.config["EMULATOR"]["create_avd"] == "yes"
+                    and not self.config.has_option('EMULATOR', 'avdmanager_command')
+            ):
                 valid_config = False
                 print("With emulator create_avd flag active: Missing mandatory EMULATOR option avdmanager_command")
         if self.config.has_section("APP"):
@@ -68,11 +70,11 @@ class Commander:
             if not self.config.has_option("MATE_SERVER", "command"):
                 valid_config = False
                 print("Missing mandatory MATE_SERVER option command")
-            if ( self.config.has_option("MATE_SERVER", "log")
-                 and self.config["MATE_SERVER"]["log"] == "yes"
-                 and not (self.config.has_option('MATE_SERVER', 'logfile')
-                          and self.config.has_option('MATE_SERVER', 'logfile_err'))
-               ):
+            if (self.config.has_option("MATE_SERVER", "log")
+                    and self.config["MATE_SERVER"]["log"] == "yes"
+                    and not (self.config.has_option('MATE_SERVER', 'logfile')
+                             and self.config.has_option('MATE_SERVER', 'logfile_err'))
+            ):
                 valid_config = False
                 print("With server log flag active: Missing mandatory MATE_SERVER options logfile and/or logfile_err")
         if self.config.has_section("MATE"):
@@ -99,7 +101,9 @@ class Commander:
         emu_conf = self.config["EMULATOR"]
         if not (self.config.has_option('EMULATOR', 'create_avd') and emu_conf["create_avd"] == "yes"):
             return
-        self.create_avd_command = [str(Path(emu_conf["avdmanager_command"]).expanduser()), "create", "avd", "--force", "--name", emu_conf["device_id"], "--abi", "google_apis/x86", "--package", "system-images;android-25;google_apis;x86"]
+        self.create_avd_command = [str(Path(emu_conf["avdmanager_command"]).expanduser()), "create", "avd", "--force",
+                                   "--name", emu_conf["device_id"], "--abi", "google_apis/x86", "--package",
+                                   "system-images;android-25;google_apis;x86"]
         print("Creating AVD...")
         p = subprocess.run(self.create_avd_command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, input=b'\n')
         out, err = p.stdout.decode("utf-8").strip(), p.stderr.decode("utf-8").strip()
@@ -116,7 +120,8 @@ class Commander:
             print("Running without emulator")
             return
         self.emu_command = self.jar_prefix("EMULATOR")
-        self.emu_command = self.emu_command + [str(Path(emu_conf["command"]).expanduser()) , "-avd", emu_conf["device_id"], "-verbose"]
+        self.emu_command = self.emu_command + [str(Path(emu_conf["command"]).expanduser()), "-avd",
+                                               emu_conf["device_id"], "-verbose"]
         if self.config.has_option("EMULATOR", "logcat_tags"):
             self.emu_command = self.emu_command + ["-logcat", emu_conf["logcat_tags"]]
         print("Using Emulator")
@@ -137,7 +142,7 @@ class Commander:
             self.emu_proc = subprocess.Popen(self.emu_command)
         # wait for device to come online
         self.adb_port_str = "console listening on port "
-        self.adb_port_command = ["grep", self.adb_port_str,  "log/emu.log"]
+        self.adb_port_command = ["grep", self.adb_port_str, "log/emu.log"]
         self.emu_name = subprocess.run(self.adb_port_command, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                                        shell=True).stdout.decode("utf-8").strip()
         while self.emu_name is None or self.adb_port_str not in self.emu_name:
@@ -149,17 +154,20 @@ class Commander:
         self.emu_name = "emulator-" + self.emu_name
         print("Emulator: " + self.emu_name)
         self.check_command = ["adb", "-s", self.emu_name, "shell", "getprop", "sys.boot_completed"]
-        check_out = subprocess.run(self.check_command, stdout=subprocess.PIPE, stderr=subprocess.PIPE).stdout.decode("utf-8").strip()
+        check_out = subprocess.run(self.check_command, stdout=subprocess.PIPE, stderr=subprocess.PIPE).stdout.decode(
+            "utf-8").strip()
         while check_out != "1":
             sleep(0.2)
-            check_out = subprocess.run(self.check_command, stdout=subprocess.PIPE, stderr=subprocess.PIPE).stdout.decode("utf-8").strip()
+            check_out = subprocess.run(self.check_command, stdout=subprocess.PIPE,
+                                       stderr=subprocess.PIPE).stdout.decode("utf-8").strip()
         print("Emulator online!")
 
-    def install_dependencies(self,apk):
+    def install_dependencies(self, apk):
         if not self.config.has_section("EMULATOR"):
             return
         emu_conf = self.config["EMULATOR"]
-        if not (self.config.has_option('EMULATOR', 'install_dependencies') and emu_conf["install_dependencies"] == "yes"):
+        if not (self.config.has_option('EMULATOR', 'install_dependencies') and emu_conf[
+            "install_dependencies"] == "yes"):
             return
         self.install_app_command = ["adb", "-s", self.emu_name, "install", "-g", apk]
 
@@ -182,9 +190,11 @@ class Commander:
         print("Done")
 
         print("Installing mate representation-layer...")
-        self.install_mate_representation_layer_command = ["adb", "-s", self.emu_name, "install", "representation-debug-androidTest.apk"]
+        self.install_mate_representation_layer_command = ["adb", "-s", self.emu_name, "install",
+                                                          "representation-debug-androidTest.apk"]
 
-        p = subprocess.run(self.install_mate_representation_layer_command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        p = subprocess.run(self.install_mate_representation_layer_command, stdout=subprocess.PIPE,
+                           stderr=subprocess.PIPE)
         out, err = p.stdout.decode("utf-8").strip(), p.stderr.decode("utf-8").strip()
         print(out)
         print(err)
@@ -194,13 +204,15 @@ class Commander:
 
     def grant_runtime_permissions(self, package):
         print("Granting read/write runtime permissions for external storage...")
-        self.read_permission_command = ['adb', "-s", self.emu_name, 'shell', 'pm', 'grant', package, 'android.permission.READ_EXTERNAL_STORAGE']
+        self.read_permission_command = ['adb', "-s", self.emu_name, 'shell', 'pm', 'grant', package,
+                                        'android.permission.READ_EXTERNAL_STORAGE']
         p = subprocess.run(self.read_permission_command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         out, err = p.stdout.decode("utf-8").strip(), p.stderr.decode("utf-8").strip()
         print(out)
         print(err)
 
-        self.write_permission_command = ['adb', "-s", self.emu_name, 'shell', 'pm', 'grant', package, 'android.permission.WRITE_EXTERNAL_STORAGE']
+        self.write_permission_command = ['adb', "-s", self.emu_name, 'shell', 'pm', 'grant', package,
+                                         'android.permission.WRITE_EXTERNAL_STORAGE']
         p = subprocess.run(self.write_permission_command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         out, err = p.stdout.decode("utf-8").strip(), p.stderr.decode("utf-8").strip()
         print(out)
@@ -215,16 +227,16 @@ class Commander:
         print(out)
         print(err)
         print("Done")
-        
+
     def read_mate_server_properties(self):
-    
+
         if not os.path.exists("mate-server.properties"):
             return None
-    
+
         # equip with virtual default section
         with open("mate-server.properties", 'r') as f:
             config_string = '[DEFAULT]\n' + f.read()
-            
+
         config = configparser.ConfigParser()
         config.read_string(config_string)
         return config
@@ -236,7 +248,7 @@ class Commander:
         sv_conf = self.config['MATE_SERVER']
         self.mate_server_command = self.jar_prefix("MATE_SERVER")
         self.mate_server_command.append(str(Path(sv_conf["command"]).expanduser()))
-        
+
         if self.config.has_option("MATE_SERVER", "log") and sv_conf["log"] == "yes":
             self.fs = open(sv_conf["logfile"], "a")
             self.fs_err = open(sv_conf["logfile_err"], "a")
@@ -246,25 +258,26 @@ class Commander:
             self.fs_err.flush()
             print("Server logging enabled. Logging to " + sv_conf["logfile"] + " and " + sv_conf["logfile_err"])
             print("Starting mate server...")
-            self.mate_server_proc = subprocess.Popen(self.mate_server_command, stdout=subprocess.PIPE, stderr=self.fs_err)
+            self.mate_server_proc = subprocess.Popen(self.mate_server_command, stdout=subprocess.PIPE,
+                                                     stderr=self.fs_err)
         else:
             print("Starting mate server...")
             self.mate_server_proc = subprocess.Popen(self.mate_server_command, stdout=subprocess.PIPE)
-            
+
         mate_server_config = self.read_mate_server_properties()
-        
+
         if mate_server_config is not None:
-        
+
             if mate_server_config.has_option("DEFAULT", "port"):
                 self.mate_server_port = int(mate_server_config["DEFAULT"]["port"])
-                
+
                 if self.mate_server_port == 0:
                     # the mate server prints the actual port to stdout (first line)
                     self.mate_server_port = int(self.mate_server_proc.stdout.readline().strip())
 
                 # share the port to mate
-                self.set_port_for_mate() 
-                
+                self.set_port_for_mate()
+
         has_f = False
         out = None
 
@@ -272,51 +285,52 @@ class Commander:
         if self.config.has_option("MATE_SERVER", "log") and sv_conf["log"] == "yes":
             has_f = True
             out = self.fs
-        
+
         # log to file or stdout depending on configuration
         start_new_thread(cont_log, (self.mate_server_proc.stdout, True, self.fs))
 
     def set_port_for_mate(self):
-        exec_str = str.encode('run-as org.mate\ncd /data/user/0/org.mate\nmkdir files\ncd files\necho ' + str(self.mate_server_port) + ' > port\nexit\nexit\n', 'ascii')
+        exec_str = str.encode('run-as org.mate\ncd /data/user/0/org.mate\nmkdir files\ncd files\necho ' + str(
+            self.mate_server_port) + ' > port\nexit\nexit\n', 'ascii')
         self.set_port_for_mate_command = ['adb', "-s", self.emu_name, 'shell']
         subprocess.run(self.set_port_for_mate_command, input=exec_str)
 
     def create_files_dir(self):
         print("Creating files dir")
         pkg_name = self.config['APP']['ID']
-        exec_str = str.encode('run-as ' + pkg_name+ '\nmkdir files\nexit\nexit\n', 'ascii')
+        exec_str = str.encode('run-as ' + pkg_name + '\nmkdir files\nexit\nexit\n', 'ascii')
         self.set_port_for_mate_command = ['adb', "-s", self.emu_name, 'shell']
         subprocess.run(self.set_port_for_mate_command, input=exec_str)
         print("Done.")
 
     def push_system_events(self):
         print("Pushing list of system events onto MATE's internal storage...")
-        cmd = "bash.exe --login -i -c" + " " + "'./push-systemEvents.sh" + " " + self.config['APP']['ID'] + "'"   
-        print(cmd)        
+        cmd = "bash.exe --login -i -c" + " " + "'./push-systemEvents.sh" + " " + self.config['APP']['ID'] + "'"
+        print(cmd)
         p = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
-        out, err = p.stdout.decode("utf-8").strip(), p.stderr.decode("utf-8").strip()             
-        print(out)                
-        print(err)              
-        print("Done") 
+        out, err = p.stdout.decode("utf-8").strip(), p.stderr.decode("utf-8").strip()
+        print(out)
+        print(err)
+        print("Done")
 
     def push_manifest(self):
         print("Pushing Manifest onto MATE's internal storage...")
-        cmd = "bash.exe --login -i -c" + " " + "'./push-manifest.sh" + " " + self.config['APP']['ID'] + "'"   
-        print(cmd)        
+        cmd = "bash.exe --login -i -c" + " " + "'./push-manifest.sh" + " " + self.config['APP']['ID'] + "'"
+        print(cmd)
         p = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
-        out, err = p.stdout.decode("utf-8").strip(), p.stderr.decode("utf-8").strip()             
-        print(out)                
-        print(err)              
-        print("Done") 
+        out, err = p.stdout.decode("utf-8").strip(), p.stderr.decode("utf-8").strip()
+        print(out)
+        print(err)
+        print("Done")
 
     def push_static_info(self):
         print("Pushing Static Info onto MATE's internal storage...")
-        cmd = "bash.exe --login -i -c" + " " + "'./push-staticInfo.sh" + " " + self.config['APP']['ID'] + "'"  
-        print(cmd)  
+        cmd = "bash.exe --login -i -c" + " " + "'./push-staticInfo.sh" + " " + self.config['APP']['ID'] + "'"
+        print(cmd)
         p = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
-        out, err = p.stdout.decode("utf-8").strip(), p.stderr.decode("utf-8").strip()              
-        print(out)                  
-        print(err)               
+        out, err = p.stdout.decode("utf-8").strip(), p.stderr.decode("utf-8").strip()
+        print(out)
+        print(err)
         print("Done")
 
     def push_static_strings(self):
@@ -331,13 +345,13 @@ class Commander:
 
     def push_media_files(self):
         print("Pushing MediaFiles onto external storage...")
-        cmd = "bash.exe --login -i -c" + " " + "'./push-mediafiles.sh" + " " + self.emu_name + "'"   
-        print(cmd)        
+        cmd = "bash.exe --login -i -c" + " " + "'./push-mediafiles.sh" + " " + self.emu_name + "'"
+        print(cmd)
         p = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
-        out, err = p.stdout.decode("utf-8").strip(), p.stderr.decode("utf-8").strip()             
-        print(out)                
-        print(err)              
-        print("Done") 
+        out, err = p.stdout.decode("utf-8").strip(), p.stderr.decode("utf-8").strip()
+        print(out)
+        print(err)
+        print("Done")
 
     def push_test_cases(self):
         print("Pushing recorded Test Cases onto Emulator...")
@@ -359,7 +373,7 @@ class Commander:
         print(err)
         print("Done")
 
-    def convert_strategy(self, strategy : str):
+    def convert_strategy(self, strategy: str):
         """Converts the old strategy name of the form ExecuteMATE<strategy> to <strategy>"""
         return strategy.removeprefix("ExecuteMATE")
 
@@ -373,15 +387,21 @@ class Commander:
         if "replay" in flag:
             strategy = "ReplayRun"
 
-        # only available for API 26+, see https://stackoverflow.com/questions/7415997/how-to-start-and-stop-android-service-from-a-adb-shell/52312482#52312482
-        # self.test_command = ["adb", "-s", self.emu_name, "shell", "am", "start-foreground-service", "-n",
-        #                     "org.mate/.service.MATEService", "-e", "packageName", package, "-e", "algorithm", strategy]
+        api_version_command = ["adb", "shell", "getprop", "ro.build.version.sdk"]
+        api_version = int(subprocess.run(api_version_command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                          .stdout.decode("utf-8").strip())
 
-        # according to 'adb shell dumpsys activity services <service>' this also starts a foreground service
-        self.test_command = ["adb", "-s", self.emu_name, "shell", "am", "startservice", "-n",
-                              "org.mate/.service.MATEService", "-e", "packageName", package, "-e", "algorithm", strategy]
+        # default method for API < 26
+        start_service_method = "startservice"
 
-        p = subprocess.run(self.test_command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        # https://stackoverflow.com/questions/7415997/how-to-start-and-stop-android-service-from-a-adb-shell/52312482#52312482
+        if api_version >= 26:
+            start_service_method = "start-foreground-service"
+
+        self.service_command = ["adb", "-s", self.emu_name, "shell", "am", start_service_method, "-n",
+                             "org.mate/.service.MATEService", "-e", "packageName", package, "-e", "algorithm", strategy]
+
+        p = subprocess.run(self.service_command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         out, err = p.stdout.decode("utf-8").strip(), p.stderr.decode("utf-8").strip()
         print(out)
         print(err)
