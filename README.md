@@ -4,7 +4,7 @@ The minimal requirements are:
 
 * You need at least Java 11 and `JAVA_HOME` needs to exported to the `PATH`.
 * You need a working `python3` installation.
-* You need an Android SDK and an emulator, both come bundled with Android-Studio.
+* You need an Android SDK and an emulator, both come bundled with Android Studio.
 * You need a bash on Windows, see https://gitforwindows.org/.
 * The binary bash.exe needs to be on the `PATH`.
 * The binary adb.exe needs to be on the `PATH`.
@@ -140,6 +140,9 @@ to the previous logs.
 
 By default `commander.py` runs the emulator in headless mode. If you wish to see what
 the emulator is actually doing, search for the flag `-no-window` within the file `commander.py`
-and comment it out.
+and comment it out. If you like to debug the execution of `MATE`, add the flag `debug` to the
+invocation of `commander.py`. Once the `MATE_SERVICE` log "MATE Service waiting for Debugger to 
+be attached to Android Process" appears, you can attach your debugger through clicking
+`Run -> Attach Debugger to Android Process -> org.mate` within Android Studio.
 
 

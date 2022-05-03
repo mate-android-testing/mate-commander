@@ -387,6 +387,12 @@ class Commander:
         if "replay" in flag:
             strategy = "ReplayRun"
 
+        # check whether we like to debug MATE
+        if "debug" in flag:
+            debug = "true"
+        else:
+            debug = "false"
+
         api_version_command = ["adb", "shell", "getprop", "ro.build.version.sdk"]
         api_version = int(subprocess.run(api_version_command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
                           .stdout.decode("utf-8").strip())
@@ -399,7 +405,8 @@ class Commander:
             start_service_method = "start-foreground-service"
 
         self.service_command = ["adb", "-s", self.emu_name, "shell", "am", start_service_method, "-n",
-                             "org.mate/.service.MATEService", "-e", "packageName", package, "-e", "algorithm", strategy]
+                                "org.mate/.service.MATEService", "-e", "packageName", package,
+                                "-e", "algorithm", strategy, "--ez", "wait-for-debugger", debug]
 
         p = subprocess.run(self.service_command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         out, err = p.stdout.decode("utf-8").strip(), p.stderr.decode("utf-8").strip()
