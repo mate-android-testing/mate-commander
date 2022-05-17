@@ -9,7 +9,6 @@ import sys
 import signal
 from _thread import start_new_thread
 
-
 def cont_log(p, hf, f):
     if hf:
         while True:
@@ -27,7 +26,6 @@ def cont_log(p, hf, f):
                 print(line)
             else:
                 break
-
 
 class Commander:
     def __init__(self):
@@ -173,6 +171,10 @@ class Commander:
 
         self.config["APP"]["id"] = os.path.split(apk)[1].split(".apk")[0]
 
+        # There seems to be a timing issue on an emulator running API 29 such that the call to 'adb install' is blocking
+        # forever. Sleeping at least once second seems to resolve the issue for now.
+        sleep(1)
+
         print("Installing app: " + self.config["APP"]["id"] + ".apk" + "...")
         p = subprocess.run(self.install_app_command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         out, err = p.stdout.decode("utf-8").strip(), p.stderr.decode("utf-8").strip()
@@ -296,6 +298,8 @@ class Commander:
         subprocess.run(self.set_port_for_mate_command, input=exec_str)
 
     def create_files_dir(self):
+        # TODO: this seems to be only necessary for the manually-instrumented line coverage APKs
+        # this only works if the AUT is debuggable
         print("Creating files dir")
         pkg_name = self.config['APP']['ID']
         exec_str = str.encode('run-as ' + pkg_name + '\nmkdir files\nexit\nexit\n', 'ascii')
