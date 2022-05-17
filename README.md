@@ -20,10 +20,9 @@ MATE_SERVER_HOME="C:\\Users\\Michael\\git\\mate-server"
 MATE_COMMANDER_HOME="C:\\Users\\Michael\\git\\mate-commander"
 ```
 
-Now, run `buildMATE.sh <package-name>`. This will build and copy the relevant artifacts (apks, jar) into `MATE_COMMANDER_HOME`.
-Look at the notes below for obtaining the package name of the AUT.
 Create an empty `bin` folder within the mate-commander directory (this is where the MATE-Server jar will be placed).
-Now, run `buildMATE.sh`. This will build and copy the relevant artifacts (apks, jar) into `MATE_COMMANDER_HOME`.
+Now, run `buildMATE.sh <package-name>`. This will build and copy the relevant artifacts (apks, jar) into 
+`MATE_COMMANDER_HOME`. Look at the notes below for obtaining the package name of the AUT.
 NOTE: If your Java version is incompatible with the gradle version of MATE, you can use some older Java version by 
 specifying `-Dorg.gradle.java.home="C:\\Program Files\\Java\\jdk-11"` when running the gradle commands.
 
@@ -70,10 +69,6 @@ the path of the APK as a command line argument.
 
 Finally, you can invoke the `commander.py` as follows:
 `python3 commander.py apps/<package-name>.apk`
-
-In case you want to **debug** `MATE`, invoke the `commander.py` with an additional argument `debug`. Once the log
-_"Waiting for debugger!"_ appears in the output of `adb logcat`, attach the debugger inside Android Studio as follows:
-`Run -> 'Attach Debugger to Android Process' -> 'org.mate'`
 
 NOTE: If you encounter permissions issues related to `python/python3`, prepend the command with `winpty`. If the output
 shows a 'adb not found' log, then ensure that `adb` is really on the `PATH` and/or append the flag `shell=True` to the
