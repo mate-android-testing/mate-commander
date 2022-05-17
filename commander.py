@@ -381,18 +381,18 @@ class Commander:
         """Converts the old strategy name of the form ExecuteMATE<strategy> to <strategy>"""
         return strategy.removeprefix("ExecuteMATE")
 
-    def run_mate_service(self, flag):
+    def run_mate_service(self, flags):
         print("Wait for app to finish starting up...")
         sleep(float(self.config['MATE']['wait_for_app']))
         print("Starting MATEService...")
         package = self.config['APP']['ID']
         strategy = self.convert_strategy(self.config['MATE']['test'])
 
-        if "replay" in flag:
+        if "replay" in flags:
             strategy = "ReplayRun"
 
         # check whether we like to debug MATE
-        if "debug" in flag:
+        if "debug" in flags:
             debug = "true"
         else:
             debug = "false"
@@ -495,32 +495,31 @@ if __name__ == "__main__":
     else:
         # the path to the APK file in the apps folder, the APK must follow the convention: <package-name>.apk
         apk = sys.argv[1]
-        # optional flag(s): intent|record|replay
-        flag = ""
+        # optional flag(s): intent|record|replay|debug
+        flags = ""
         if len(sys.argv) > 2:
-            flag = sys.argv[2]
+            flags = sys.argv[2]
 
-        print("Flags: " + str(flag))
+        print("Flags: " + str(flags))
 
         com.install_dependencies(apk)
         com.grant_runtime_permissions("org.mate")
         com.run_mate_server()
-        # com.run_app()
         com.adb_root()
         # it may take some time until ADB is ready in root mode
         sleep(3)
         com.push_manifest()
         com.push_static_strings()
-        if "intent" in flag:
+        if "intent" in flags:
             com.push_system_events()
             com.push_static_info()
             com.push_media_files()
         # com.grant_permission()
-        if "replay" in flag:
+        if "replay" in flags:
             com.push_test_cases()
-        com.run_mate_service(flag)
+        com.run_mate_service(flags)
         com.wait_for_mate_service_termination()
-        if "record" in flag:
+        if "record" in flags:
             com.fetch_test_cases()
         sleep(5)
     com.stop()
