@@ -4,7 +4,7 @@ The minimal requirements are:
 
 * You need at least Java 11 and `JAVA_HOME` needs to exported to the `PATH`.
 * You need a working `python3` installation.
-* You need an Android SDK and an emulator, both come bundled with Android-Studio.
+* You need an Android SDK and an emulator, both come bundled with Android Studio.
 * You need a bash on Windows, see https://gitforwindows.org/.
 * The binary bash.exe needs to be on the `PATH`.
 * The binary adb.exe needs to be on the `PATH`.
@@ -21,7 +21,8 @@ MATE_COMMANDER_HOME="C:\\Users\\Michael\\git\\mate-commander"
 ```
 
 Create an empty `bin` folder within the mate-commander directory (this is where the MATE-Server jar will be placed).
-Now, run `buildMATE.sh`. This will build and copy the relevant artifacts (apks, jar) into `MATE_COMMANDER_HOME`.
+Now, run `buildMATE.sh <package-name>`. This will build and copy the relevant artifacts (apks, jar) into 
+`MATE_COMMANDER_HOME`. Look at the notes below for obtaining the package name of the AUT.
 NOTE: If your Java version is incompatible with the gradle version of MATE, you can use some older Java version by 
 specifying `-Dorg.gradle.java.home="C:\\Program Files\\Java\\jdk-11"` when running the gradle commands.
 
@@ -69,10 +70,6 @@ the path of the APK as a command line argument.
 Finally, you can invoke the `commander.py` as follows:
 `python3 commander.py apps/<package-name>.apk`
 
-In case you want to **debug** `MATE`, invoke the `commander.py` with an additional argument `debug`. Once the log
-_"Waiting for debugger!"_ appears in the output of `adb logcat`, attach the debugger inside Android Studio as follows:
-`Run -> 'Attach Debugger to Android Process' -> 'org.mate'`
-
 NOTE: If you encounter permissions issues related to `python/python3`, prepend the command with `winpty`. If the output
 shows a 'adb not found' log, then ensure that `adb` is really on the `PATH` and/or append the flag `shell=True` to the
 respective `subprocess.run()` invocation within `commander.py`!
@@ -94,19 +91,13 @@ Performing Streamed Install
 Success
 
 Done
-Pushing mate...
-app-debug.apk: 1 file pushed, 0 skipped. 776.7 MB/s (3947580 bytes in 0.005s)
-
-Done
-Installing mate...
+Installing mate client...
+Performing Streamed Install
 Success
 
 Done
-Pushing mate tests...
-app-debug-androidTest.apk: 1 file pushed, 0 skipped. 579.2 MB/s (1871063 bytes in 0.003s)
-
-Done
-Installing mate tests...
+Installing mate representation-layer...
+Performing Streamed Install
 Success
 
 Done
@@ -122,33 +113,10 @@ Done
 Restarting ADB as root...
 bash.exe --login -i -c 'adb -s emulator-5554 root'
 
-
 Done
 Wait for app to finish starting up...
 Running tests...
-INSTRUMENTATION_STATUS: numtests=1
-INSTRUMENTATION_STATUS: stream=
-org.mate.ExecuteMATERandomExploration:
-INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
-INSTRUMENTATION_STATUS: test=useAppContext
-INSTRUMENTATION_STATUS: class=org.mate.ExecuteMATERandomExploration
-INSTRUMENTATION_STATUS: current=1
-INSTRUMENTATION_STATUS_CODE: 1
-INSTRUMENTATION_STATUS: numtests=1
-INSTRUMENTATION_STATUS: stream=.
-INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
-INSTRUMENTATION_STATUS: test=useAppContext
-INSTRUMENTATION_STATUS: class=org.mate.ExecuteMATERandomExploration
-INSTRUMENTATION_STATUS: current=1
-INSTRUMENTATION_STATUS_CODE: 0
-INSTRUMENTATION_RESULT: stream=
-
-Time: 217.188
-
-OK (1 test)
-
-
-INSTRUMENTATION_CODE: -1
+Starting service: Intent { cmp=org.mate/.service.MATEService (has extras) }
 
 Done
 Closing emulator...
@@ -165,6 +133,7 @@ If there is any error, you can check the logs produced by `MATE` and `MATE-Serve
 ```
 cat log/emu.log | grep "E acc"
 cat log/emu.log | grep "apptest"
+cat log/emu.log | grep "MATE_SERVICE"
 cat log/emu_err.log
 cat log/server.log
 cat log/server_err.log
@@ -175,6 +144,9 @@ to the previous logs.
 
 By default `commander.py` runs the emulator in headless mode. If you wish to see what
 the emulator is actually doing, search for the flag `-no-window` within the file `commander.py`
-and comment it out.
+and comment it out. If you like to debug the execution of `MATE`, add the flag `debug` to the
+invocation of `commander.py`. Once the `MATE_SERVICE` log "MATE Service waiting for Debugger to 
+be attached to Android Process" appears, you can attach your debugger through clicking
+`Run -> Attach Debugger to Android Process -> org.mate` within Android Studio.
 
 
