@@ -203,6 +203,8 @@ class Commander:
             sleep(0.2)
             check_out = self.run_subproc(self.check_command)
         print("Emulator online!")
+        api_version_command = ["adb", "shell", "getprop", "ro.build.version.sdk"]
+        self.android_api_version = int(self.run_subproc(api_version_command))
 
     def install_dependencies(self, apk):
         if not self.config.has_section("EMULATOR"):
@@ -211,30 +213,43 @@ class Commander:
         if not (self.config.has_option('EMULATOR', 'install_dependencies') and emu_conf[
             "install_dependencies"] == "yes"):
             return
-        self.install_app_command = ["adb", "-s", self.emu_name, "install", "-g", apk]
+        self.install_command = ["adb", "-s", self.emu_name, "install", "-g", "-r"]
+        if self.android_api_version >= 30:
+            self.install_command.append("--force-queryable")
+
+        self.install_app_command = self.install_command + [apk]
 
         self.config["APP"]["id"] = os.path.split(apk)[1].split(".apk")[0]
 
         # There seems to be a timing issue on an emulator running API 29 such that the call to 'adb install' is blocking
         # forever. Sleeping at least once second seems to resolve the issue for now.
-        sleep(1)
+        if self.android_api_version == 29:
+            sleep(1)
 
         print("Installing app: " + self.config["APP"]["id"] + ".apk" + "...")
         self.print_subproc(self.install_app_command)
         print("Done")
 
         print("Installing mate client...")
-        self.install_mate_client_command = ["adb", "-s", self.emu_name, "install", "client-debug.apk"]
+        self.install_mate_client_command = self.install_command + ["client-debug.apk"]
 
         self.print_subproc(self.install_mate_client_command)
         print("Done")
 
         print("Installing mate representation-layer...")
-        self.install_mate_representation_layer_command = ["adb", "-s", self.emu_name, "install",
-                                                          "representation-debug-androidTest.apk"]
+        self.install_mate_representation_layer_command = self.install_command\
+            + ["representation-debug-androidTest.apk"]
 
         self.print_subproc(self.install_mate_representation_layer_command)
         print("Done")
+
+        if self.android_api_version >= 29:
+            # Start AUT using Monkey.
+            self.run_aut_command\
+                = ["adb", "-s", self.emu_name, "shell", "monkey", "-p",
+                   self.config["APP"]["id"], "-v", "1"]
+            self.print_subproc(self.run_aut_command)
+            print("Done")
 
         self.create_files_dir()
 
