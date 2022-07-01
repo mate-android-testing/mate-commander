@@ -1,4 +1,4 @@
-#! python
+#!/usr/bin/env python3
 import configparser
 import subprocess
 import os
@@ -8,11 +8,20 @@ from time import sleep
 import sys
 import signal
 from _thread import start_new_thread
+from sys import platform
 
 def cont_log(p, hf, f):
+    if sys.platform == "linux":
+        encoding = "utf-8"
+    elif sys.platform == "win32":
+        encoding = 'windows-1252'
+    else:
+        print("Unsupported operating system")
+        exit(1)
+
     if hf:
         while True:
-            line = p.readline().decode('windows-1252')
+            line = p.readline().decode(encoding)
             if line != '':
                 # the real code does filtering here
                 f.write(line + "\n")
@@ -298,7 +307,6 @@ class Commander:
         subprocess.run(self.set_port_for_mate_command, input=exec_str)
 
     def create_files_dir(self):
-        # TODO: this seems to be only necessary for the manually-instrumented line coverage APKs
         # this only works if the AUT is debuggable
         print("Creating files dir")
         pkg_name = self.config['APP']['ID']
@@ -307,75 +315,69 @@ class Commander:
         subprocess.run(self.set_port_for_mate_command, input=exec_str)
         print("Done.")
 
-    def push_system_events(self):
-        print("Pushing list of system events onto MATE's internal storage...")
-        cmd = "bash.exe --login -i -c" + " " + "'./push-systemEvents.sh" + " " + self.config['APP']['ID'] + "'"
-        print(cmd)
+    def push(msg, cmd):
+        print(msg)    
         p = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
         out, err = p.stdout.decode("utf-8").strip(), p.stderr.decode("utf-8").strip()
         print(out)
         print(err)
         print("Done")
+
+    def push_system_events(self):
+        msg = "Pushing list of system events onto MATE's internal storage..."
+        if sys.platform == "linux":
+            cmd = [os.getcwd() + "/push-systemEvents.sh", self.emu_name]
+        elif sys.platform == "win32":
+            cmd = "bash.exe --login -i -c" + " " + "'./push-systemEvents.sh" + " " + self.config['APP']['ID'] + "'"
+        push(msg, cmd)
 
     def push_manifest(self):
-        print("Pushing Manifest onto MATE's internal storage...")
-        cmd = "bash.exe --login -i -c" + " " + "'./push-manifest.sh" + " " + self.config['APP']['ID'] + "'"
-        print(cmd)
-        p = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
-        out, err = p.stdout.decode("utf-8").strip(), p.stderr.decode("utf-8").strip()
-        print(out)
-        print(err)
-        print("Done")
+        msg = "Pushing Manifest onto MATE's internal storage..."
+        if sys.platform == "linux":
+            cmd =  ['./push-manifest.sh', self.config['APP']['id'], self.emu_name]
+        elif sys.platform == "win32":
+            cmd = "bash.exe --login -i -c" + " " + "'./push-manifest.sh" + " " + self.config['APP']['ID'] + "'"
+        push(msg, cmd)
 
     def push_static_info(self):
-        print("Pushing Static Info onto MATE's internal storage...")
-        cmd = "bash.exe --login -i -c" + " " + "'./push-staticInfo.sh" + " " + self.config['APP']['ID'] + "'"
-        print(cmd)
-        p = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
-        out, err = p.stdout.decode("utf-8").strip(), p.stderr.decode("utf-8").strip()
-        print(out)
-        print(err)
-        print("Done")
+        msg = "Pushing Static Info onto MATE's internal storage..."
+        if sys.platform == "linux":
+            cmd = ['./push-staticInfo.sh', self.config['APP']['id'], self.emu_name]
+        elif sys.platform == "win32":
+            cmd = "bash.exe --login -i -c" + " " + "'./push-staticInfo.sh" + " " + self.config['APP']['ID'] + "'"
+        push(msg, cmd)
 
     def push_static_strings(self):
-        print("Pushing Static Strings onto external storage...")
-        cmd = "bash.exe --login -i -c" + " " + "'./push-staticStrings.sh" + " " + self.config['APP']['ID'] + "'"
-        print(cmd)
-        p = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
-        out, err = p.stdout.decode("utf-8").strip(), p.stderr.decode("utf-8").strip()
-        print(out)
-        print(err)
-        print("Done")
+        msg = "Pushing Static Strings onto external storage..."
+        if sys.platform == "linux":
+            cmd = ['./push-staticStrings.sh', self.config['APP']['id'], self.emu_name]
+        elif sys.platform == "win32":
+            cmd = "bash.exe --login -i -c" + " " + "'./push-staticStrings.sh" + " " + self.config['APP']['ID'] + "'"
+        push(msg, cmd)
 
     def push_media_files(self):
-        print("Pushing MediaFiles onto external storage...")
-        cmd = "bash.exe --login -i -c" + " " + "'./push-mediafiles.sh" + " " + self.emu_name + "'"
-        print(cmd)
-        p = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
-        out, err = p.stdout.decode("utf-8").strip(), p.stderr.decode("utf-8").strip()
-        print(out)
-        print(err)
-        print("Done")
+        msg = "Pushing MediaFiles onto external storage..."
+        if sys.platform == "linux":
+            cmd = ['./push-mediafiles.sh', self.emu_name]
+        elif sys.platform == "win32":
+            cmd = "bash.exe --login -i -c" + " " + "'./push-mediafiles.sh" + " " + self.emu_name + "'"
+        push(msg, cmd)
 
     def push_test_cases(self):
-        print("Pushing recorded Test Cases onto Emulator...")
-        cmd = "bash.exe --login -i -c" + " " + "'./push-testcases.sh" + " " + self.config['APP']['ID'] + "'"
-        print(cmd)
-        p = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
-        out, err = p.stdout.decode("utf-8").strip(), p.stderr.decode("utf-8").strip()
-        print(out)
-        print(err)
-        print("Done")
+        msg = "Pushing recorded Test Cases onto Emulator..."
+        if sys.platform == "linux":
+            cmd = [os.getcwd() + "/push-testcases.sh", self.config['APP']['ID'], self.emu_name]
+        elif sys.platform == "win32":
+            cmd = "bash.exe --login -i -c" + " " + "'./push-testcases.sh" + " " + self.config['APP']['ID'] + "'"
+        push(msg, cmd)
 
     def fetch_test_cases(self):
-        print("Fetching recorded Test Cases from emulator...")
-        cmd = "bash.exe --login -i -c" + " " + "'./fetch-testcases.sh" + " " + self.config['APP']['ID'] + "'"
-        print(cmd)
-        p = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
-        out, err = p.stdout.decode("utf-8").strip(), p.stderr.decode("utf-8").strip()
-        print(out)
-        print(err)
-        print("Done")
+        msg = "Fetching recorded Test Cases from emulator..."
+        if sys.platform == "linux":
+            cmd = [os.getcwd() + "/fetch-testcases.sh", self.config['APP']['ID'], self.emu_name]
+        elif sys.platform == "win32":
+            cmd = "bash.exe --login -i -c" + " " + "'./fetch-testcases.sh" + " " + self.config['APP']['ID'] + "'"
+        push(msg, cmd)
 
     def convert_strategy(self, strategy: str):
         """Converts the old strategy name of the form ExecuteMATE<strategy> to <strategy>"""
@@ -444,8 +446,11 @@ class Commander:
 
     def stop_emulator(self):
         print("Closing emulator...")
-        cmd = "bash.exe --login -i -c" + " " + "'adb -s " + self.emu_name + " emu kill'"
-        print(cmd)
+        if sys.platform == "linux":
+            cmd = ['adb', "-s", self.emu_name, 'emu', 'kill']
+        elif sys.platform == "win32":
+            cmd = "bash.exe --login -i -c" + " " + "'adb -s " + self.emu_name + " emu kill'"
+
         p = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
         out, err = p.stdout.decode("utf-8").strip(), p.stderr.decode("utf-8").strip()
         print(out)
@@ -454,8 +459,11 @@ class Commander:
 
     def adb_root(self):
         print("Restarting ADB as root...")
-        cmd = "bash.exe --login -i -c" + " " + "'adb -s " + self.emu_name + " root'"
-        print(cmd)
+        if sys.platform == "linux":
+            cmd = [os.getcwd() + "/root.sh", self.config['APP']['ID'], self.emu_name]
+        elif sys.platform == "win32":
+            cmd = "bash.exe --login -i -c" + " " + "'adb -s " + self.emu_name + " root'"
+
         p = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
         out, err = p.stdout.decode("utf-8").strip(), p.stderr.decode("utf-8").strip()
         print(out)
