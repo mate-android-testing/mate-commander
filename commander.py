@@ -8,20 +8,32 @@ from time import sleep
 import sys
 import signal
 from _thread import start_new_thread
+from enum import Enum, auto, unique
 from sys import platform
 
-def cont_log(p, hf, f):
+
+@unique
+class OperatingSystem(Enum):
+    Windows = auto()
+    Linux = auto()
+
+
+def get_operating_system() -> OperatingSystem:
     if sys.platform == "linux":
-        encoding = "utf-8"
+        return OperatingSystem.Linux
     elif sys.platform == "win32":
-        encoding = 'windows-1252'
+        return OperatingSystem.Windows
     else:
         print("Unsupported operating system")
         exit(1)
 
+
+def cont_log(p, hf, f):
+    encoding = {OperatingSystem.Linux: "utf-8", OperatingSystem.Windows: "windows-1252"}
+    operating_system = get_operating_system()
     if hf:
         while True:
-            line = p.readline().decode(encoding)
+            line = p.readline().decode(encoding[operating_system])
             if line != '':
                 # the real code does filtering here
                 f.write(line + "\n")
@@ -35,6 +47,7 @@ def cont_log(p, hf, f):
                 print(line)
             else:
                 break
+
 
 class Commander:
     def __init__(self):
@@ -118,6 +131,31 @@ class Commander:
         print(err)
         print("Done")
 
+    def run_popen(self, cmd: list[str], use_shell: bool = True):
+        shell_dict = {OperatingSystem.Linux: False, OperatingSystem.Windows: True}
+        operating_system = get_operating_system()
+        s = shell_dict[operating_system] and use_shell
+        return subprocess.Popen(cmd, stdout=self.f, stderr=self.f_err, shell=s)
+
+    def run_subproc_out_err(self, cmd: list[str], use_shell: bool = True) -> \
+            tuple[str, str]:
+        shell_dict = {OperatingSystem.Linux: False, OperatingSystem.Windows: True}
+        operating_system = get_operating_system()
+        s = shell_dict[operating_system] and use_shell
+        p =  subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=s)
+        out = p.stdout.decode("utf-8").strip()
+        err = p.stderr.decode("utf-8").strip()
+        return out, err
+
+    def print_subproc(self, cmd: list[str], use_shell: bool = True) -> \
+            tuple[str, str]:
+        out, err = self.run_subproc_out_err(cmd, use_shell)
+        print(out)
+        print(err)
+
+    def run_subproc(self, cmd: list[str], use_shell: bool = True) -> str:
+        return self.run_subproc_out_err(cmd, use_shell)[0]
+
     def run_emulator(self):
         if not self.config.has_section("EMULATOR"):
             print("Running without emulator")
@@ -133,7 +171,7 @@ class Commander:
             self.emu_command = self.emu_command + ["-logcat", emu_conf["logcat_tags"]]
         print("Using Emulator")
         # self.emu_command = self.emu_command + ["-wipe-data","-qemu"]
-        self.emu_command = self.emu_command + ["-wipe-data","-no-window","-qemu"] #, "-enable-kvm"]
+        self.emu_command = self.emu_command + ["-wipe-data", "-qemu", "-enable-kvm"]
         if self.config.has_option("EMULATOR", "log") and emu_conf["log"] == "yes":
             self.f = open(emu_conf["logfile"], "a")
             self.f_err = open(emu_conf["logfile_err"], "a")
@@ -143,30 +181,27 @@ class Commander:
             self.f_err.flush()
             print("Emulator logging enabled. Logging to " + emu_conf["logfile"] + " and " + emu_conf["logfile_err"])
             print("Starting Emulator...")
-            self.emu_proc = subprocess.Popen(self.emu_command, stdout=self.f, stderr=self.f_err)
+            self.emu_proc = self.run_popen(self.emu_command, False)
         else:
             print("Starting Emulator...")
-            self.emu_proc = subprocess.Popen(self.emu_command)
+            self.emu_proc = self.run_popen(self.emu_command, False)
+
         # wait for device to come online
         self.adb_port_str = "console listening on port "
         self.adb_port_command = ["grep", self.adb_port_str, "log/emu.log"]
-        self.emu_name = subprocess.run(self.adb_port_command, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-                                       shell=True).stdout.decode("utf-8").strip()
+        self.emu_name = self.run_subproc(self.adb_port_command)
         while self.emu_name is None or self.adb_port_str not in self.emu_name:
             sleep(0.2)
-            self.emu_name = subprocess.run(self.adb_port_command, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-                                           shell=True).stdout.decode("utf-8").strip()
+            self.emu_name = self.run_subproc(self.adb_port_command)
         self.emu_name = self.emu_name[len(self.adb_port_str):]
         self.emu_name = re.findall('\d+', self.emu_name)[0]
         self.emu_name = "emulator-" + self.emu_name
         print("Emulator: " + self.emu_name)
         self.check_command = ["adb", "-s", self.emu_name, "shell", "getprop", "sys.boot_completed"]
-        check_out = subprocess.run(self.check_command, stdout=subprocess.PIPE, stderr=subprocess.PIPE).stdout.decode(
-            "utf-8").strip()
+        check_out = self.run_subproc(self.check_command)
         while check_out != "1":
             sleep(0.2)
-            check_out = subprocess.run(self.check_command, stdout=subprocess.PIPE,
-                                       stderr=subprocess.PIPE).stdout.decode("utf-8").strip()
+            check_out = self.run_subproc(self.check_command)
         print("Emulator online!")
 
     def install_dependencies(self, apk):
@@ -185,30 +220,20 @@ class Commander:
         sleep(1)
 
         print("Installing app: " + self.config["APP"]["id"] + ".apk" + "...")
-        p = subprocess.run(self.install_app_command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        out, err = p.stdout.decode("utf-8").strip(), p.stderr.decode("utf-8").strip()
-        print(out)
-        print(err)
+        self.print_subproc(self.install_app_command)
         print("Done")
 
         print("Installing mate client...")
         self.install_mate_client_command = ["adb", "-s", self.emu_name, "install", "client-debug.apk"]
 
-        p = subprocess.run(self.install_mate_client_command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        out, err = p.stdout.decode("utf-8").strip(), p.stderr.decode("utf-8").strip()
-        print(out)
-        print(err)
+        self.print_subproc(self.install_mate_client_command)
         print("Done")
 
         print("Installing mate representation-layer...")
         self.install_mate_representation_layer_command = ["adb", "-s", self.emu_name, "install",
                                                           "representation-debug-androidTest.apk"]
 
-        p = subprocess.run(self.install_mate_representation_layer_command, stdout=subprocess.PIPE,
-                           stderr=subprocess.PIPE)
-        out, err = p.stdout.decode("utf-8").strip(), p.stderr.decode("utf-8").strip()
-        print(out)
-        print(err)
+        self.print_subproc(self.install_mate_representation_layer_command)
         print("Done")
 
         self.create_files_dir()
@@ -217,30 +242,20 @@ class Commander:
         print("Granting read/write runtime permissions for external storage...")
         self.read_permission_command = ['adb', "-s", self.emu_name, 'shell', 'pm', 'grant', package,
                                         'android.permission.READ_EXTERNAL_STORAGE']
-        p = subprocess.run(self.read_permission_command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        out, err = p.stdout.decode("utf-8").strip(), p.stderr.decode("utf-8").strip()
-        print(out)
-        print(err)
+        self.print_subproc(self.read_permission_command)
 
         self.write_permission_command = ['adb', "-s", self.emu_name, 'shell', 'pm', 'grant', package,
                                          'android.permission.WRITE_EXTERNAL_STORAGE']
-        p = subprocess.run(self.write_permission_command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        out, err = p.stdout.decode("utf-8").strip(), p.stderr.decode("utf-8").strip()
-        print(out)
-        print(err)
+        self.print_subproc(self.write_permission_command)
         print("Done")
 
     def run_app(self):
         print("Starting app...")
         self.app_command = ['adb', "-s", self.emu_name, 'shell', 'monkey', '-p', self.config['APP']['id'], '1']
-        p = subprocess.run(self.app_command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        out, err = p.stdout.decode("utf-8").strip(), p.stderr.decode("utf-8").strip()
-        print(out)
-        print(err)
+        self.print_subproc(self.app_command)
         print("Done")
 
     def read_mate_server_properties(self):
-
         if not os.path.exists("mate-server.properties"):
             return None
 
@@ -315,69 +330,80 @@ class Commander:
         subprocess.run(self.set_port_for_mate_command, input=exec_str)
         print("Done.")
 
-    def push(msg, cmd):
-        print(msg)    
-        p = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
-        out, err = p.stdout.decode("utf-8").strip(), p.stderr.decode("utf-8").strip()
-        print(out)
-        print(err)
+    def push(self, msg, cmd):
+        print(msg)
+        self.print_subproc(cmd)
         print("Done")
 
     def push_system_events(self):
         msg = "Pushing list of system events onto MATE's internal storage..."
-        if sys.platform == "linux":
-            cmd = [os.getcwd() + "/push-systemEvents.sh", self.emu_name]
-        elif sys.platform == "win32":
-            cmd = "bash.exe --login -i -c" + " " + "'./push-systemEvents.sh" + " " + self.config['APP']['ID'] + "'"
-        push(msg, cmd)
+        operating_system = get_operating_system()
+        cmd = {OperatingSystem.Linux:
+               [os.getcwd() + "/push-systemEvents.sh", self.emu_name],
+               OperatingSystem.Windows:
+               "bash.exe --login -i -c" + " " + "'./push-systemEvents.sh" + " " + self.config['APP']['ID'] + "'"
+               }
+        self.push(msg, cmd[operating_system])
 
     def push_manifest(self):
         msg = "Pushing Manifest onto MATE's internal storage..."
-        if sys.platform == "linux":
-            cmd =  ['./push-manifest.sh', self.config['APP']['id'], self.emu_name]
-        elif sys.platform == "win32":
-            cmd = "bash.exe --login -i -c" + " " + "'./push-manifest.sh" + " " + self.config['APP']['ID'] + "'"
-        push(msg, cmd)
+        operating_system = get_operating_system()
+        cmd = {OperatingSystem.Linux:
+               ['./push-manifest.sh', self.config[ 'APP']['id'], self.emu_name],
+               OperatingSystem.Windows:
+               "bash.exe --login -i -c" + " " + "'./push-manifest.sh" + " " + self.config['APP']['ID'] + "'"
+               }
+        self.push(msg, cmd[operating_system])
 
     def push_static_info(self):
         msg = "Pushing Static Info onto MATE's internal storage..."
-        if sys.platform == "linux":
-            cmd = ['./push-staticInfo.sh', self.config['APP']['id'], self.emu_name]
-        elif sys.platform == "win32":
-            cmd = "bash.exe --login -i -c" + " " + "'./push-staticInfo.sh" + " " + self.config['APP']['ID'] + "'"
-        push(msg, cmd)
+        operating_system = get_operating_system()
+        cmd = {OperatingSystem.Linux:
+               ['./push-staticInfo.sh', self.config[ 'APP']['id'], self.emu_name],
+               OperatingSystem.Windows:
+               "bash.exe --login -i -c" + " " + "'./push-staticInfo.sh" + " " + self.config['APP']['ID'] + "'"
+               }
+        self.push(msg, cmd[operating_system])
 
     def push_static_strings(self):
         msg = "Pushing Static Strings onto external storage..."
-        if sys.platform == "linux":
-            cmd = ['./push-staticStrings.sh', self.config['APP']['id'], self.emu_name]
-        elif sys.platform == "win32":
-            cmd = "bash.exe --login -i -c" + " " + "'./push-staticStrings.sh" + " " + self.config['APP']['ID'] + "'"
-        push(msg, cmd)
+        operating_system = get_operating_system()
+        cmd = {OperatingSystem.Linux:
+               ['./push-staticStrings.sh', self.config['APP']['id'], self.emu_name],
+               OperatingSystem.Windows:
+               "bash.exe --login -i -c" + " " + "'./push-staticStrings.sh" + " " + self.config['APP']['ID'] + "'"
+               }
+        self.push(msg, cmd[operating_system])
 
     def push_media_files(self):
         msg = "Pushing MediaFiles onto external storage..."
-        if sys.platform == "linux":
-            cmd = ['./push-mediafiles.sh', self.emu_name]
-        elif sys.platform == "win32":
-            cmd = "bash.exe --login -i -c" + " " + "'./push-mediafiles.sh" + " " + self.emu_name + "'"
-        push(msg, cmd)
+        operating_system = get_operating_system()
+        cmd = {OperatingSystem.Linux:
+               ['./push-mediafiles.sh', self.emu_name],
+               OperatingSystem.Windows:
+               "bash.exe --login -i -c" + " " + "'./push-mediafiles.sh" + " " + self.emu_name + "'"
+               }
+        self.push(msg, cmd[operating_system])
 
     def push_test_cases(self):
         msg = "Pushing recorded Test Cases onto Emulator..."
-        if sys.platform == "linux":
-            cmd = [os.getcwd() + "/push-testcases.sh", self.config['APP']['ID'], self.emu_name]
-        elif sys.platform == "win32":
-            cmd = "bash.exe --login -i -c" + " " + "'./push-testcases.sh" + " " + self.config['APP']['ID'] + "'"
-        push(msg, cmd)
+        operating_system = get_operating_system()
+        cmd = {OperatingSystem.Linux:
+               [os.getcwd() + "/push-testcases.sh", self.config['APP']['ID'], self.emu_name],
+               OperatingSystem.Windows:
+               "bash.exe --login -i -c" + " " + "'./push-testcases.sh" + " " + self.config['APP']['ID'] + "'"
+               }
+        self.push(msg, cmd[operating_system])
 
     def fetch_test_cases(self):
         msg = "Fetching recorded Test Cases from emulator..."
-        if sys.platform == "linux":
-            cmd = [os.getcwd() + "/fetch-testcases.sh", self.config['APP']['ID'], self.emu_name]
-        elif sys.platform == "win32":
-            cmd = "bash.exe --login -i -c" + " " + "'./fetch-testcases.sh" + " " + self.config['APP']['ID'] + "'"
-        push(msg, cmd)
+        operating_system = get_operating_system()
+        cmd = {OperatingSystem.Linux:
+               [os.getcwd() + "/fetch-testcases.sh", self.config['APP'][ 'ID'], self.emu_name],
+               OperatingSystem.Windows:
+               "bash.exe --login -i -c" + " " + "'./fetch-testcases.sh" + " " + self.config['APP']['ID'] + "'"
+               }
+        self.push(msg, cmd[operating_system])
 
     def convert_strategy(self, strategy: str):
         """Converts the old strategy name of the form ExecuteMATE<strategy> to <strategy>"""
@@ -434,14 +460,12 @@ class Commander:
         self.check_mate_service_command = ["adb", "-s", self.emu_name, "shell", "dumpsys", "activity", "services",
                                            "org.mate/.service.MATEService"]
 
-        self.service_response = subprocess.run(self.check_mate_service_command, stdout=subprocess.PIPE,
-                                               stderr=subprocess.PIPE, shell=True).stdout.decode("utf-8").strip()
+        self.service_response = self.run_subproc(self.check_mate_service_command)
 
         # poll every 10 seconds whether the service is still running; reports '(nothing)' in case the service is down
         while self.service_response is None or "(nothing)" not in self.service_response:
             sleep(10)
-            self.service_response = subprocess.run(self.check_mate_service_command, stdout=subprocess.PIPE,
-                                                   stderr=subprocess.PIPE, shell=True).stdout.decode("utf-8").strip()
+            self.service_response = self.run_subproc(self.check_mate_service_command)
         print("Done")
 
     def stop_emulator(self):
@@ -451,23 +475,15 @@ class Commander:
         elif sys.platform == "win32":
             cmd = "bash.exe --login -i -c" + " " + "'adb -s " + self.emu_name + " emu kill'"
 
-        p = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
-        out, err = p.stdout.decode("utf-8").strip(), p.stderr.decode("utf-8").strip()
-        print(out)
-        print(err)
+        self.print_subproc(cmd)
         print("Done")
 
     def adb_root(self):
         print("Restarting ADB as root...")
-        if sys.platform == "linux":
-            cmd = [os.getcwd() + "/root.sh", self.config['APP']['ID'], self.emu_name]
-        elif sys.platform == "win32":
-            cmd = "bash.exe --login -i -c" + " " + "'adb -s " + self.emu_name + " root'"
-
-        p = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
-        out, err = p.stdout.decode("utf-8").strip(), p.stderr.decode("utf-8").strip()
-        print(out)
-        print(err)
+        cmd = {OperatingSystem.Linux: [os.getcwd() + "/root.sh", self.config[ 'APP']['ID'], self.emu_name],
+               OperatingSystem.Windows: "bash.exe --login -i -c" + " " + "'adb -s " + self.emu_name + " root'"}
+        operating_system = get_operating_system()
+        self.print_subproc(cmd[operating_system])
         print("Done")
 
     def stop(self):
