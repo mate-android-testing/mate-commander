@@ -1,6 +1,6 @@
-# MATE-COMMANDER FOR LOCAL RUNS ON WINDOWS
+# MATE-COMMANDER FOR LOCAL RUNS ON WINDOWS OR LINUX
 
-The minimal requirements are:
+The minimal requirements for Windows are:
 
 * You need at least Java 11 and `JAVA_HOME` needs to exported to the `PATH`.
 * You need a working `python3` installation.
@@ -12,6 +12,17 @@ The minimal requirements are:
 * A copy of MATE, see https://github.com/mate-android-testing/mate.
 * A copy of MATE-Server, see https://github.com/mate-android-testing/mate-server.
 
+The minimal requirements for Linux are:
+
+* You need at least Java 11 and `JAVA_HOME` needs to exported to the `PATH`.
+* You need a working `python3` installation.
+* You need an Android SDK and an emulator, both come bundled with Android Studio.
+* The binary adb needs to be on the `PATH`.
+* `ANDROID_HOME` need to be set and be on the `PATH`.
+* A copy of MATE, see https://github.com/mate-android-testing/mate.
+* A copy of MATE-Server, see https://github.com/mate-android-testing/mate-server.
+
+
 Then, you need to adjust the paths within `buildMATE.sh`, e.g.:
 
 ```
@@ -19,11 +30,19 @@ MATE_HOME="C:\\Users\\Michael\\git\\mate"
 MATE_SERVER_HOME="C:\\Users\\Michael\\git\\mate-server"
 MATE_COMMANDER_HOME="C:\\Users\\Michael\\git\\mate-commander"
 ```
+for Windows or
+```
+MATE_HOME="/home/auermich/tools/mate"
+MATE_SERVER_HOME="/home/auermich/tools/mate-server"
+MATE_COMMANDER_HOME="/home/auermich/tools/mate-commander"
+```
+for Linux.
 
 Create an empty `bin` folder within the mate-commander directory (this is where the MATE-Server jar will be placed).
-Now, run `buildMATE.sh <package-name>`. This will build and copy the relevant artifacts (apks, jar) into 
+Now, run `buildMATE.sh <package-name>`. This will build and copy the relevant artifacts (apks, jar) into
 `MATE_COMMANDER_HOME`. Look at the notes below for obtaining the package name of the AUT.
-NOTE: If your Java version is incompatible with the gradle version of MATE, you can use some older Java version by 
+
+NOTE: On Windows if your Java version is incompatible with the gradle version of MATE, you can use some older Java version by
 specifying `-Dorg.gradle.java.home="C:\\Program Files\\Java\\jdk-11"` when running the gradle commands.
 
 The next step is to adjust the configuration file `config.ini` as follows:
@@ -42,7 +61,7 @@ The next steps are the following:
 * Create an empty `apps` folder within the mate-commander directory.
 * Put a sample APK into the aforementioned `apps` folder. The name must match the following convention:
 `<package-name>.apk`. In order to derive the package name of an APK, you have two options. Either you use the
-command `aapt dump badging <path-to-apk> | grep package:\ name` (aapt is shipped with the Android-SDK) or extract the 
+command `aapt dump badging <path-to-apk> | grep package:\ name` (aapt is shipped with the Android-SDK) or extract the
 name from the `AndroidManifest.xml` using `apktool`. For initial testing we suggest the BMI-Calculator app from
 https://f-droid.org/en/packages/com.zola.bmi/. The package name for this app is: **com.zola.bmi**, hence rename the APK
 to com.zola.bmi.apk.
@@ -50,7 +69,7 @@ to com.zola.bmi.apk.
 this means a folder named `com.zola.bmi`. This is the place where you put additional resources for certain testing
 strategies or where `MATE` writes coverage information for instance. Right now, this app specific folder needs to contain
 at least the `AndroidManifest.xml`. Thus, the simplest option is to call `apktool d <packagename>.apk` within the `apps`
-folder and this will produce the required folder, e.g. `com.zola.bmi` for the BMI-Calculator app, containing the 
+folder and this will produce the required folder, e.g. `com.zola.bmi` for the BMI-Calculator app, containing the
 `AndroidManifest.xml` file.
 
 All other configurations of `MATE` and `MATE-Server` are controlled by adjusting the properties defined within
@@ -62,7 +81,7 @@ Optional steps:
 * It is handy to have the `apktool` installed, see https://ibotpeaches.github.io/Apktool/. You can run
 `apktool d <path-to-apk> -o <output-folder> -f` to decode an APK. Then, you can read for instance the package
 name from the file `AndroidManifest.xml`, it's within the first few lines.
-* It is also wise to have a keystore for signing APKs (right now `signAPK.sh` is using Android's default debugging keystore). 
+* It is also wise to have a keystore for signing APKs (right now `signAPK.sh` is using Android's default debugging keystore).
   This step is mandatory whenever you modify an APK, e.g. instrument it with coverage information. Follow the steps at https://stackoverflow.com/questions/10930331/how-to-sign-an-already-compiled-apk.
 Once you have a keystore, you need to adjust the file `signAPK.sh`. After that, you can sign an APK by supplying
 the path of the APK as a command line argument.
@@ -145,8 +164,6 @@ to the previous logs.
 By default `commander.py` runs the emulator in headless mode. If you wish to see what
 the emulator is actually doing, search for the flag `-no-window` within the file `commander.py`
 and comment it out. If you like to debug the execution of `MATE`, add the flag `debug` to the
-invocation of `commander.py`. Once the `MATE_SERVICE` log "MATE Service waiting for Debugger to 
+invocation of `commander.py`. Once the `MATE_SERVICE` log "MATE Service waiting for Debugger to
 be attached to Android Process" appears, you can attach your debugger through clicking
 `Run -> Attach Debugger to Android Process -> org.mate` within Android Studio.
-
-
