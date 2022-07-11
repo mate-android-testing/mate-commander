@@ -183,8 +183,9 @@ class Commander:
             self.emu_proc = self.run_popen(self.emu_command, False)
 
         # wait for device to come online
+        emu_log_file = self.config['EMULATOR']['logfile']
         self.adb_port_str = "console listening on port "
-        self.adb_port_command = ["grep", self.adb_port_str, "log/emu.log"]
+        self.adb_port_command = ["grep", self.adb_port_str, emu_log_file]
         self.emu_name = self.run_subproc(self.adb_port_command)
         while self.emu_name is None or self.adb_port_str not in self.emu_name:
             sleep(0.2)
@@ -220,12 +221,12 @@ class Commander:
 
         print("Installing mate...")
         self.install_mate_command = ["adb", "-s", self.emu_name, "install", "-g", "app-debug.apk"]
-        self.print_subroc(self.install_mate_command)
+        self.print_subproc(self.install_mate_command)
         print("Done")
 
         print("Installing mate tests...")
         self.install_mate_tests_command = ["adb", "-s", self.emu_name, "install", "-g", "app-debug-androidTest.apk"]
-        self.print_subroc(self.install_mate_tests_command)
+        self.print_subproc(self.install_mate_tests_command)
         print("Done")
 
         self.create_files_dir()
@@ -413,7 +414,7 @@ class Commander:
         self.test_command = ['adb', "-s", self.emu_name, 'shell', 'am', 'instrument', '-w', '-r', '-e', 'debug', 'false',
                              '-e', 'jacoco', 'false', '-e', 'wait-for-debugger', debug, '-e', 'packageName', package, '-e', 'class',
                              "'org.mate." + strategy + "'", 'org.mate.test/android.support.test.runner.AndroidJUnitRunner']
-        self.print_subproc(self.test_command, false)
+        self.print_subproc(self.test_command, False)
         print("Done")
 
     def stop_emulator(self):
