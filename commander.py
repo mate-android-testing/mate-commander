@@ -253,7 +253,7 @@ class Commander:
 
         self.create_files_dir()
 
-    def grant_runtime_permissions(self, package):
+    def grant_runtime_permissions(self, package, aut_package):
         print("Granting read/write runtime permissions for external storage...")
         self.read_permission_command = ['adb', "-s", self.emu_name, 'shell', 'pm', 'grant', package,
                                         'android.permission.READ_EXTERNAL_STORAGE']
@@ -262,6 +262,15 @@ class Commander:
         self.write_permission_command = ['adb', "-s", self.emu_name, 'shell', 'pm', 'grant', package,
                                          'android.permission.WRITE_EXTERNAL_STORAGE']
         self.print_subproc(self.write_permission_command)
+
+        if self.android_api_version >= 30:
+            # We need the MANAGE_EXTERNAL_STORAGE to read and write to the traces file.
+            access_external_storage_cmd = ["adb", "-s", self.emu_name, "shell", "appops", "set", "--uid", package, "MANAGE_EXTERNAL_STORAGE", "allow"]
+            self.run_subproc(access_external_storage_cmd)
+
+            access_external_storage_cmd = ["adb", "-s", self.emu_name, "shell", "appops", "set", "--uid", aut_package , "MANAGE_EXTERNAL_STORAGE", "allow"]
+            self.run_subproc(access_external_storage_cmd)
+
         print("Done")
 
     def run_app(self):
@@ -542,7 +551,7 @@ if __name__ == "__main__":
         print("Flags: " + str(flags))
 
         com.install_dependencies(apk)
-        com.grant_runtime_permissions("org.mate")
+        com.grant_runtime_permissions("org.mate", Path(apk).stem)
         com.run_mate_server()
         com.adb_root()
         # it may take some time until ADB is ready in root mode
