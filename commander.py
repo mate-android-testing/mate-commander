@@ -200,7 +200,7 @@ class Commander:
             sleep(0.2)
             check_out = self.run_subproc(self.check_command)
         print("Emulator online!")
- 
+
     def install_dependencies(self,apk):
         if not self.config.has_section("EMULATOR"):
             return
@@ -245,15 +245,15 @@ class Commander:
         self.app_command = ['adb', "-s", self.emu_name, 'shell', 'monkey', '-p', self.config['APP']['id'], '1']
         self.print_subproc(self.app_command)
         print("Done")
-        
+
     def read_mate_server_properties(self):
         if not os.path.exists("mate-server.properties"):
             return None
-    
+
         # equip with virtual default section
         with open("mate-server.properties", 'r') as f:
             config_string = '[DEFAULT]\n' + f.read()
-            
+
         config = configparser.ConfigParser()
         config.read_string(config_string)
         return config
@@ -265,7 +265,7 @@ class Commander:
         sv_conf = self.config['MATE_SERVER']
         self.mate_server_command = self.jar_prefix("MATE_SERVER")
         self.mate_server_command.append(str(Path(sv_conf["command"]).expanduser()))
-        
+
         if self.config.has_option("MATE_SERVER", "log") and sv_conf["log"] == "yes":
             self.fs = open(sv_conf["logfile"], "a")
             self.fs_err = open(sv_conf["logfile_err"], "a")
@@ -280,21 +280,21 @@ class Commander:
             print("Starting mate server...")
             self.mate_server_proc = subprocess.Popen(self.mate_server_command, stdout=subprocess.PIPE,
                                                      stderr=self.fs_err)
-            
+
         mate_server_config = self.read_mate_server_properties()
-        
+
         if mate_server_config is not None:
-        
+
             if mate_server_config.has_option("DEFAULT", "port"):
                 self.mate_server_port = int(mate_server_config["DEFAULT"]["port"])
-                
+
                 if self.mate_server_port == 0:
                     # the mate server prints the actual port to stdout (first line)
                     self.mate_server_port = int(self.mate_server_proc.stdout.readline().strip())
 
                 # share the port to mate
-                self.set_port_for_mate() 
-                
+                self.set_port_for_mate()
+
         has_f = False
         out = None
 
@@ -302,7 +302,7 @@ class Commander:
         if self.config.has_option("MATE_SERVER", "log") and sv_conf["log"] == "yes":
             has_f = True
             out = self.fs
-        
+
         # log to file or stdout depending on configuration
         start_new_thread(cont_log, (self.mate_server_proc.stdout, True, self.fs))
 
@@ -395,7 +395,6 @@ class Commander:
                "bash.exe --login -i -c" + " " + "'./fetch-testcases.sh" + " " + self.config['APP']['ID'] + "'"
                }
         self.push(msg, cmd[operating_system])
-
 
     def run_mate_tests(self, flags):
         print("Wait for app to finish starting up...")
