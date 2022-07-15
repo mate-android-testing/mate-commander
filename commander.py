@@ -166,8 +166,8 @@ class Commander:
         if self.config.has_option("EMULATOR", "logcat_tags"):
             self.emu_command = self.emu_command + ["-logcat", emu_conf["logcat_tags"]]
         print("Using Emulator")
-        # self.emu_command = self.emu_command + ["-wipe-data","-qemu"]
-        self.emu_command = self.emu_command + ["-wipe-data", "-qemu", "-enable-kvm"]
+        # self.emu_command = self.emu_command + ["-wipe-data","-no-window", "-qemu", "-enable-kvm"]
+        self.emu_command = self.emu_command + ["-wipe-data", "-qemu"]
         if self.config.has_option("EMULATOR", "log") and emu_conf["log"] == "yes":
             self.f = open(emu_conf["logfile"], "a")
             self.f_err = open(emu_conf["logfile_err"], "a")
