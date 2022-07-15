@@ -199,7 +199,7 @@ class Commander:
             check_out = self.run_subproc(self.check_command)
         print("Emulator online!")
 
-    def install_dependencies(self,apk):
+    def install_dependencies(self, apk):
         if not self.config.has_section("EMULATOR"):
             return
         emu_conf = self.config["EMULATOR"]
