@@ -50,7 +50,7 @@ The next step is to adjust the configuration file `config.ini` as follows:
 * Specify the path of the emulator binary under the `[EMULATOR]` section, see the variable `command`.
 * Specify the name of the AVD under the `[EMULATOR]` section, see the variable `device_id`. To create a new
 AVD, open Android-Studio, click on the AVD-Manager and follow the instructions. Check the properties field for
-the name of the AVD. We suggest to use either `Nexus 5` or `Pixel C` with API level 25/28/29. Note, however,
+the name of the AVD. We suggest using either `Nexus 5` or `Pixel C` with API level 25/28/29/30. Note, however,
 that you can't use a Google-PlayStore supported device like `Nexus 5` or `Nexus 5X` together with the suggested
 Google-Play image due to permission issues; you have to fall back to one of the x86 images in this case.
 * Specify the test strategy under the `[MATE]` section, stick to `ExecuteMATERandomExploration` for initial testing.
@@ -71,6 +71,9 @@ strategies or where `MATE` writes coverage information for instance. Right now, 
 at least the `AndroidManifest.xml`. Thus, the simplest option is to call `apktool d <packagename>.apk` within the `apps`
 folder and this will produce the required folder, e.g. `com.zola.bmi` for the BMI-Calculator app, containing the
 `AndroidManifest.xml` file.
+* Adjust the script `signAPK.sh` that is responsible for signing the APKs. In particular, you have to define the paths 
+  to the two binaries `apksigner` and `zipalign` that come bundled with the Android SDK. If you wish to use your own keystore
+  follow the instructions at: https://stackoverflow.com/questions/10930331/how-to-sign-an-already-compiled-apk.
 
 All other configurations of `MATE` and `MATE-Server` are controlled by adjusting the properties defined within
 the files `mate.properties` and `mate-server.properties`, respectively. For instance, to control the timeout
@@ -81,10 +84,6 @@ Optional steps:
 * It is handy to have the `apktool` installed, see https://ibotpeaches.github.io/Apktool/. You can run
 `apktool d <path-to-apk> -o <output-folder> -f` to decode an APK. Then, you can read for instance the package
 name from the file `AndroidManifest.xml`, it's within the first few lines.
-* It is also wise to have a keystore for signing APKs (right now `signAPK.sh` is using Android's default debugging keystore).
-  This step is mandatory whenever you modify an APK, e.g. instrument it with coverage information. Follow the steps at https://stackoverflow.com/questions/10930331/how-to-sign-an-already-compiled-apk.
-Once you have a keystore, you need to adjust the file `signAPK.sh`. After that, you can sign an APK by supplying
-the path of the APK as a command line argument.
 
 Finally, you can invoke the `commander.py` as follows:
 `python3 commander.py apps/<package-name>.apk`
@@ -158,12 +157,11 @@ cat log/server.log
 cat log/server_err.log
 ```
 
-Note that you have to clear the log folder after each run, otherwise the logs are appended
-to the previous logs.
+Note that you have to clear the log folder after each run, otherwise the logs are appended to the previous logs.
 
-By default `commander.py` runs the emulator in headless mode. If you wish to see what
-the emulator is actually doing, search for the flag `-no-window` within the file `commander.py`
-and comment it out. If you like to debug the execution of `MATE`, add the flag `debug` to the
-invocation of `commander.py`. Once the `MATE_SERVICE` log "MATE Service waiting for Debugger to
-be attached to Android Process" appears, you can attach your debugger through clicking
-`Run -> Attach Debugger to Android Process -> org.mate` within Android Studio.
+By default, `commander.py` runs the emulator in the foreground. If you want to run the emulator in headless mode,
+append the flag `-no-window` to the emulator start options. On Linux, you may want to enable the flag `-enable-kvm` as well. 
+
+If you like to **debug** the execution of `MATE`, add the flag `debug` to the invocation of `commander.py`. Once the 
+`MATE_SERVICE` log "MATE Service waiting for Debugger to  be attached to Android Process" appears, you can attach your 
+debugger through clicking `Run -> Attach Debugger to Android Process -> org.mate` within Android Studio.
