@@ -427,7 +427,7 @@ class Commander:
 
     def adb_root(self):
         print("Restarting ADB as root...")
-        cmd = {OperatingSystem.Linux: [os.getcwd() + "/root.sh", self.config[ 'APP']['ID'], self.emu_name],
+        cmd = {OperatingSystem.Linux: ['adb', "-s", self.emu_name, 'root'],
                OperatingSystem.Windows: "bash.exe --login -i -c" + " " + "'adb -s " + self.emu_name + " root'"}
         operating_system = get_operating_system()
         self.print_subproc(cmd[operating_system])
