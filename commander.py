@@ -133,18 +133,16 @@ class Commander:
         s = shell_dict[operating_system] and use_shell
         return subprocess.Popen(cmd, stdout=self.f, stderr=self.f_err, shell=s)
 
-    def run_subproc_out_err(self, cmd: list[str], use_shell: bool = True) -> \
-            tuple[str, str]:
+    def run_subproc_out_err(self, cmd: list[str], use_shell: bool = True) -> tuple[str, str]:
         shell_dict = {OperatingSystem.Linux: False, OperatingSystem.Windows: True}
         operating_system = get_operating_system()
         s = shell_dict[operating_system] and use_shell
-        p =  subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=s)
+        p = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=s)
         out = p.stdout.decode("utf-8").strip()
         err = p.stderr.decode("utf-8").strip()
         return out, err
 
-    def print_subproc(self, cmd: list[str], use_shell: bool = True) -> \
-            tuple[str, str]:
+    def print_subproc(self, cmd: list[str], use_shell: bool = True) -> tuple[str, str]:
         out, err = self.run_subproc_out_err(cmd, use_shell)
         print(out)
         print(err)
@@ -297,8 +295,7 @@ class Commander:
             self.mate_server_proc = subprocess.Popen(self.mate_server_command, stdout=subprocess.PIPE, stderr=self.fs_err)
         else:
             print("Starting mate server...")
-            self.mate_server_proc = subprocess.Popen(self.mate_server_command, stdout=subprocess.PIPE,
-                                                     stderr=self.fs_err)
+            self.mate_server_proc = subprocess.Popen(self.mate_server_command, stdout=subprocess.PIPE, stderr=self.fs_err)
 
         mate_server_config = self.read_mate_server_properties()
 
