@@ -1,8 +1,8 @@
 #!/bin/bash
 
-# adjust the path accordingly!
-zipalign=$ANDROID_HOME/build-tools/31.0.0/zipalign
-apksigner=$ANDROID_HOME/build-tools/31.0.0/apksigner
+# adjust the paths accordingly (don't miss the .bat extension for the apksigner binary on Windows)
+zipalign=$ANDROID_HOME/build-tools/30.0.2/zipalign
+apksigner=$ANDROID_HOME/build-tools/30.0.2/apksigner
 
 $zipalign -p 4 $1 $1.aligned
 
