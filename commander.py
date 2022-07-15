@@ -186,7 +186,7 @@ class Commander:
 
         # wait for device to come online
         self.adb_port_str = "console listening on port "
-        self.adb_port_command = ["grep", self.adb_port_str, "log/emu.log"]
+        self.adb_port_command = ["grep", self.adb_port_str, emu_conf["logfile"]]
         self.emu_name = self.run_subproc(self.adb_port_command)
         while self.emu_name is None or self.adb_port_str not in self.emu_name:
             sleep(0.2)
