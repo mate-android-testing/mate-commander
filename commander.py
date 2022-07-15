@@ -207,37 +207,56 @@ class Commander:
         emu_conf = self.config["EMULATOR"]
         if not (self.config.has_option('EMULATOR', 'install_dependencies') and emu_conf["install_dependencies"] == "yes"):
             return
-        self.install_app_command = ["adb", "-s", self.emu_name, "install", "-g", apk]
+
+        api_version_command = ["adb", "-s", self.emu_name, "shell", "getprop", "ro.build.version.sdk"]
+        self.api_version = int(subprocess.run(api_version_command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                               .stdout.decode("utf-8").strip())
+
+        install_command = ["adb", "-s", self.emu_name, "install", "-g", "-r"]
+        if self.api_version >= 30:
+            install_command = install_command + ["--force-queryable"]
+
+        install_app_command = install_command + [apk]
 
         self.config["APP"]["id"] = os.path.split(apk)[1].split(".apk")[0]
 
         # There seems to be a timing issue on an emulator running API 29 such that the call to 'adb install' is blocking
         # forever. Sleeping at least once second seems to resolve the issue for now.
-        sleep(1)
+        if self.api_version == 29:
+            sleep(1)
 
         print("Installing app: " + self.config["APP"]["id"] + ".apk" + "...")
-        self.print_subproc(self.install_app_command)
+        self.print_subproc(install_app_command)
         print("Done")
 
         print("Installing mate...")
-        self.install_mate_command = ["adb", "-s", self.emu_name, "install", "-g", "app-debug.apk"]
-        self.print_subproc(self.install_mate_command)
+        install_mate_command = install_command + ["app-debug.apk"]
+        self.print_subproc(install_mate_command)
         print("Done")
 
         print("Installing mate tests...")
-        self.install_mate_tests_command = ["adb", "-s", self.emu_name, "install", "-g", "app-debug-androidTest.apk"]
-        self.print_subproc(self.install_mate_tests_command)
+        install_mate_tests_command = install_command + ["app-debug-androidTest.apk"]
+        self.print_subproc(install_mate_tests_command)
         print("Done")
 
         self.create_files_dir()
 
     def grant_runtime_permissions(self, package):
-        print("Granting read/write runtime permissions for external storage...")
-        self.read_permission_command = ['adb', "-s", self.emu_name, 'shell', 'pm', 'grant', package, 'android.permission.READ_EXTERNAL_STORAGE']
-        self.print_subproc(self.read_permission_command)
+        print("Granting read/write/manage runtime permissions for external storage...")
+        read_permission_command = ['adb', "-s", self.emu_name, 'shell', 'pm', 'grant', package,
+                                   'android.permission.READ_EXTERNAL_STORAGE']
+        self.print_subproc(read_permission_command)
 
-        self.write_permission_command = ['adb', "-s", self.emu_name, 'shell', 'pm', 'grant', package, 'android.permission.WRITE_EXTERNAL_STORAGE']
-        self.print_subproc(self.write_permission_command)
+        write_permission_command = ['adb', "-s", self.emu_name, 'shell', 'pm', 'grant', package,
+                                    'android.permission.WRITE_EXTERNAL_STORAGE']
+        self.print_subproc(write_permission_command)
+
+        if self.api_version >= 30:
+            # https://developer.android.com/training/data-storage/manage-all-files#enable-manage-external-storage-for-testing
+            manage_permission_command = ["adb", "-s", self.emu_name, "shell", "appops", "set", "--uid", package,
+                                         "MANAGE_EXTERNAL_STORAGE", "allow"]
+            self.print_subproc(manage_permission_command)
+
         print("Done")
 
     def run_app(self):
@@ -475,6 +494,7 @@ if __name__ == "__main__":
 
         com.install_dependencies(apk)
         com.grant_runtime_permissions("org.mate")
+        com.grant_runtime_permissions(com.config["APP"]["id"])
         com.run_mate_server()
         com.run_app()
         com.adb_root()
