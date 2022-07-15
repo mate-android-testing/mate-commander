@@ -203,18 +203,20 @@ class Commander:
             sleep(0.2)
             check_out = self.run_subproc(self.check_command)
         print("Emulator online!")
-        api_version_command = ["adb", "shell", "getprop", "ro.build.version.sdk"]
-        self.android_api_version = int(self.run_subproc(api_version_command))
 
     def install_dependencies(self, apk):
         if not self.config.has_section("EMULATOR"):
             return
         emu_conf = self.config["EMULATOR"]
-        if not (self.config.has_option('EMULATOR', 'install_dependencies') and emu_conf[
-            "install_dependencies"] == "yes"):
+        if not (self.config.has_option('EMULATOR', 'install_dependencies') and emu_conf["install_dependencies"] == "yes"):
             return
+
+        api_version_command = ["adb", "-s", self.emu_name, "shell", "getprop", "ro.build.version.sdk"]
+        self.api_version = int(self.run_subproc(api_version_command))
+
         self.install_command = ["adb", "-s", self.emu_name, "install", "-g", "-r"]
-        if self.android_api_version >= 30:
+
+        if self.api_version >= 30:
             self.install_command.append("--force-queryable")
 
         self.install_app_command = self.install_command + [apk]
@@ -223,8 +225,8 @@ class Commander:
 
         # There seems to be a timing issue on an emulator running API 29 such that the call to 'adb install' is blocking
         # forever. Sleeping at least once second seems to resolve the issue for now.
-        if self.android_api_version == 29:
-            sleep(1)
+        if self.api_version == 29:
+            sleep(3)
 
         print("Installing app: " + self.config["APP"]["id"] + ".apk" + "...")
         self.print_subproc(self.install_app_command)
@@ -237,39 +239,31 @@ class Commander:
         print("Done")
 
         print("Installing mate representation-layer...")
-        self.install_mate_representation_layer_command = self.install_command\
-            + ["representation-debug-androidTest.apk"]
+        self.install_mate_representation_layer_command = self.install_command + ["representation-debug-androidTest.apk"]
 
         self.print_subproc(self.install_mate_representation_layer_command)
         print("Done")
 
-        if self.android_api_version >= 29:
-            # Start AUT using Monkey.
-            self.run_aut_command\
-                = ["adb", "-s", self.emu_name, "shell", "monkey", "-p",
-                   self.config["APP"]["id"], "-v", "1"]
-            self.print_subproc(self.run_aut_command)
-            print("Done")
+        if self.api_version >= 29:
+            self.run_app()
 
         self.create_files_dir()
 
-    def grant_runtime_permissions(self, package, aut_package):
-        print("Granting read/write runtime permissions for external storage...")
-        self.read_permission_command = ['adb', "-s", self.emu_name, 'shell', 'pm', 'grant', package,
-                                        'android.permission.READ_EXTERNAL_STORAGE']
-        self.print_subproc(self.read_permission_command)
+    def grant_runtime_permissions(self, package):
+        print("Granting read/write/manage runtime permissions for external storage...")
+        read_permission_command = ['adb', "-s", self.emu_name, 'shell', 'pm', 'grant', package,
+                                   'android.permission.READ_EXTERNAL_STORAGE']
+        self.print_subproc(read_permission_command)
 
-        self.write_permission_command = ['adb', "-s", self.emu_name, 'shell', 'pm', 'grant', package,
-                                         'android.permission.WRITE_EXTERNAL_STORAGE']
-        self.print_subproc(self.write_permission_command)
+        write_permission_command = ['adb', "-s", self.emu_name, 'shell', 'pm', 'grant', package,
+                                    'android.permission.WRITE_EXTERNAL_STORAGE']
+        self.print_subproc(write_permission_command)
 
-        if self.android_api_version >= 30:
-            # We need the MANAGE_EXTERNAL_STORAGE to read and write to the traces file.
-            access_external_storage_cmd = ["adb", "-s", self.emu_name, "shell", "appops", "set", "--uid", package, "MANAGE_EXTERNAL_STORAGE", "allow"]
-            self.run_subproc(access_external_storage_cmd)
-
-            access_external_storage_cmd = ["adb", "-s", self.emu_name, "shell", "appops", "set", "--uid", aut_package , "MANAGE_EXTERNAL_STORAGE", "allow"]
-            self.run_subproc(access_external_storage_cmd)
+        if self.api_version >= 30:
+            # https://developer.android.com/training/data-storage/manage-all-files#enable-manage-external-storage-for-testing
+            manage_permission_command = ["adb", "-s", self.emu_name, "shell", "appops", "set", "--uid", package,
+                                         "MANAGE_EXTERNAL_STORAGE", "allow"]
+            self.print_subproc(manage_permission_command)
 
         print("Done")
 
@@ -551,7 +545,8 @@ if __name__ == "__main__":
         print("Flags: " + str(flags))
 
         com.install_dependencies(apk)
-        com.grant_runtime_permissions("org.mate", Path(apk).stem)
+        com.grant_runtime_permissions("org.mate")
+        com.grant_runtime_permissions(com.config["APP"]["id"])
         com.run_mate_server()
         com.adb_root()
         # it may take some time until ADB is ready in root mode
