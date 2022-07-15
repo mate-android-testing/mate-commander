@@ -137,8 +137,7 @@ class Commander:
         s = shell_dict[operating_system] and use_shell
         return subprocess.Popen(cmd, stdout=self.f, stderr=self.f_err, shell=s)
 
-    def run_subproc_out_err(self, cmd: list[str], use_shell: bool = True) -> \
-            tuple[str, str]:
+    def run_subproc_out_err(self, cmd: list[str], use_shell: bool = True) -> tuple[str, str]:
         shell_dict = {OperatingSystem.Linux: False, OperatingSystem.Windows: True}
         operating_system = get_operating_system()
         s = shell_dict[operating_system] and use_shell
@@ -147,8 +146,7 @@ class Commander:
         err = p.stderr.decode("utf-8").strip()
         return out, err
 
-    def print_subproc(self, cmd: list[str], use_shell: bool = True) -> \
-            tuple[str, str]:
+    def print_subproc(self, cmd: list[str], use_shell: bool = True):
         out, err = self.run_subproc_out_err(cmd, use_shell)
         print(out)
         print(err)
