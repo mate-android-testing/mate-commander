@@ -165,6 +165,8 @@ class Commander:
             self.emu_command = self.emu_command + ["-logcat", emu_conf["logcat_tags"]]
             # Alternative to specify logcat tags (unfortunately the format nor the behaviour is not well-documented):
             # os.environ["ANDROID_LOG_TAGS"] = "*:v" (requires import of os module!)
+        if self.config.has_option("EMULATOR", "logcat_file"):
+            self.emu_command.extend(("-logcat-output", emu_conf["logcat_file"]))
         print("Using Emulator")
         # self.emu_command = self.emu_command + ["-wipe-data","-no-window", "-qemu", "-enable-kvm"]
         self.emu_command = self.emu_command + ["-wipe-data", "-qemu"]
@@ -452,6 +454,18 @@ class Commander:
         self.print_subproc(cmd[operating_system])
         print("Done")
 
+    def merge_emu_log_files(self):
+        """Merges the logcat.log and emu.log into a single file."""
+
+        if self.config.has_option("EMULATOR", "logcat_file"):
+            logcat_file = self.config["EMULATOR"]["logcat_file"]
+            emu_log_file = self.config["EMULATOR"]["logfile"]
+            print(f"Appending content of {logcat_file} to {emu_log_file}...")
+            with open(emu_log_file, "a+", encoding="ISO-8859-1") as log, \
+                    open(logcat_file, "r", encoding="ISO-8859-1") as logcat:
+                log.write(logcat.read())
+            print("Done")
+
     def stop(self):
         com.stop_emulator()
         if hasattr(self, "f"):
@@ -511,5 +525,6 @@ if __name__ == "__main__":
         com.run_mate_tests(flags)
         if "record" in flags:
             com.fetch_test_cases()
+        com.merge_emu_log_files()
         sleep(5)
     com.stop()
