@@ -222,9 +222,9 @@ class Commander:
         self.config["APP"]["id"] = os.path.split(apk)[1].split(".apk")[0]
 
         # There seems to be a timing issue on an emulator running API 29 such that the call to 'adb install' is blocking
-        # forever. Sleeping at least once second seems to resolve the issue for now.
+        # forever. Sleeping at least a couple of seconds seems to resolve the issue for now.
         if self.api_version == 29:
-            sleep(1)
+            sleep(5)
 
         print("Installing app: " + self.config["APP"]["id"] + ".apk" + "...")
         self.print_subproc(install_app_command)
