@@ -499,10 +499,9 @@ if __name__ == "__main__":
         sleep(3)
         com.push_manifest()
         com.push_static_strings()
-        if "intent" in flags:
-            com.push_system_events()
-            com.push_static_info()
-            com.push_media_files()
+        com.push_system_events()
+        com.push_static_info()
+        com.push_media_files()
         # com.grant_permission()
         if "replay" in flags:
             com.push_test_cases()
