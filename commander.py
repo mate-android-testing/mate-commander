@@ -191,7 +191,7 @@ class Commander:
         while self.emu_name is None or self.adb_port_str not in self.emu_name:
             sleep(0.2)
             self.emu_name = self.run_subproc(self.adb_port_command)
-        self.emu_name = self.emu_name[len(self.adb_port_str):]
+        self.emu_name = self.emu_name.split(self.adb_port_str)[1]
         self.emu_name = re.findall('\d+', self.emu_name)[0]
         self.emu_name = "emulator-" + self.emu_name
         print("Emulator: " + self.emu_name)
