@@ -163,6 +163,8 @@ class Commander:
                                                emu_conf["device_id"], "-verbose"]
         if self.config.has_option("EMULATOR", "logcat_tags"):
             self.emu_command = self.emu_command + ["-logcat", emu_conf["logcat_tags"]]
+            # Alternative to specify logcat tags (unfortunately the format nor the behaviour is not well-documented):
+            # os.environ["ANDROID_LOG_TAGS"] = "*:v" (requires import of os module!)
         print("Using Emulator")
         # self.emu_command = self.emu_command + ["-wipe-data","-no-window", "-qemu", "-enable-kvm"]
         self.emu_command = self.emu_command + ["-wipe-data", "-qemu"]
