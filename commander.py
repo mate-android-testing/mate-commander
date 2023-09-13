@@ -131,7 +131,7 @@ class Commander:
         shell_dict = {OperatingSystem.Linux: False, OperatingSystem.Windows: True}
         operating_system = get_operating_system()
         s = shell_dict[operating_system] and use_shell
-        return subprocess.Popen(cmd, stdout=self.f, stderr=self.f_err, shell=s)
+        return subprocess.Popen(cmd, stdout=self.f, stderr=self.f_err, shell=s, bufsize=0)
 
     def run_subproc_out_err(self, cmd: list[str], use_shell: bool = True) -> tuple[str, str]:
         shell_dict = {OperatingSystem.Linux: False, OperatingSystem.Windows: True}
@@ -163,9 +163,14 @@ class Commander:
                                                emu_conf["device_id"], "-verbose"]
         if self.config.has_option("EMULATOR", "logcat_tags"):
             self.emu_command = self.emu_command + ["-logcat", emu_conf["logcat_tags"]]
+            # Alternative to specify logcat tags (unfortunately the format nor the behaviour is not well-documented):
+            # os.environ["ANDROID_LOG_TAGS"] = "*:v" (requires import of os module!)
+        if self.config.has_option("EMULATOR", "logcat_file"):
+            self.emu_command.extend(("-logcat-output", emu_conf["logcat_file"]))
         print("Using Emulator")
         # self.emu_command = self.emu_command + ["-wipe-data","-no-window", "-qemu", "-enable-kvm"]
         self.emu_command = self.emu_command + ["-wipe-data", "-qemu"]
+        # self.emu_command = self.emu_command + ["-wipe-data", "-no-window", "-show-kernel", "-debug-all", "-qemu"]
         if self.config.has_option("EMULATOR", "log") and emu_conf["log"] == "yes":
             self.f = open(emu_conf["logfile"], "a")
             self.f_err = open(emu_conf["logfile_err"], "a")
@@ -188,7 +193,7 @@ class Commander:
         while self.emu_name is None or self.adb_port_str not in self.emu_name:
             sleep(0.2)
             self.emu_name = self.run_subproc(self.adb_port_command)
-        self.emu_name = self.emu_name[len(self.adb_port_str):]
+        self.emu_name = self.emu_name.split(self.adb_port_str)[1]
         self.emu_name = re.findall('\d+', self.emu_name)[0]
         self.emu_name = "emulator-" + self.emu_name
         print("Emulator: " + self.emu_name)
@@ -219,9 +224,9 @@ class Commander:
         self.config["APP"]["id"] = os.path.split(apk)[1].split(".apk")[0]
 
         # There seems to be a timing issue on an emulator running API 29 such that the call to 'adb install' is blocking
-        # forever. Sleeping at least once second seems to resolve the issue for now.
+        # forever. Sleeping at least a couple of seconds seems to resolve the issue for now.
         if self.api_version == 29:
-            sleep(1)
+            sleep(5)
 
         print("Installing app: " + self.config["APP"]["id"] + ".apk" + "...")
         self.print_subproc(install_app_command)
@@ -449,6 +454,18 @@ class Commander:
         self.print_subproc(cmd[operating_system])
         print("Done")
 
+    def merge_emu_log_files(self):
+        """Merges the logcat.log and emu.log into a single file."""
+
+        if self.config.has_option("EMULATOR", "logcat_file"):
+            logcat_file = self.config["EMULATOR"]["logcat_file"]
+            emu_log_file = self.config["EMULATOR"]["logfile"]
+            print(f"Appending content of {logcat_file} to {emu_log_file}...")
+            with open(emu_log_file, "a+", encoding="ISO-8859-1") as log, \
+                    open(logcat_file, "r", encoding="ISO-8859-1") as logcat:
+                log.write(logcat.read())
+            print("Done")
+
     def stop(self):
         com.stop_emulator()
         if hasattr(self, "f"):
@@ -508,5 +525,6 @@ if __name__ == "__main__":
         com.run_mate_tests(flags)
         if "record" in flags:
             com.fetch_test_cases()
+        com.merge_emu_log_files()
         sleep(5)
     com.stop()
