@@ -60,7 +60,11 @@ this means a folder named `com.zola.bmi`. This is the place where you put additi
 strategies or where `MATE` writes coverage information for instance. Right now, this app specific folder needs to contain
 at least the `AndroidManifest.xml`. Thus, the simplest option is to call `apktool d <packagename>.apk` within the `apps`
 folder and this will produce the required folder, e.g. `com.zola.bmi` for the BMI-Calculator app, containing the
-`AndroidManifest.xml` file.
+`AndroidManifest.xml` file. In addition, you need to place a folder called `static_data` that you obtain from running the
+  `dexanalyzer` tool (https://github.com/mate-android-testing/dexanalyzer) inside the app folder. Ideally, you want to
+  measure coverage by using the `WallMauer` tool (https://github.com/mate-android-testing/wallmauer). In this case you
+  need to place the obtained artefacts into the app folder as well, see 
+  https://github.com/mate-android-testing/wallmauer?tab=readme-ov-file#mate-integration.
 * Adjust the script `signAPK.sh` that is responsible for signing the APKs. In particular, you have to define the paths
 to the two binaries `apksigner` and `zipalign` that come bundled with the Android SDK. If you wish to use your own keystore
   follow the instructions at: https://stackoverflow.com/questions/10930331/how-to-sign-an-already-compiled-apk.
@@ -184,3 +188,119 @@ to the previous logs.
 
 By default `commander.py` runs the emulator in the foreground. If you want to run the emulator in headless mode,
 append the flag `-no-window` to the emulator start options. On Linux, you may want to enable the flag `-enable-kvm` as well.
+
+## Scripts
+
+You can use below script to generate the required artefacts by MATE for multiple apps. The script is invoked by providing
+as first argument the folder containing the plain APKs and as second argument the folder where the instrumented APKs
+and the app folders should be placed. You would typically invoke the script via `nohup` since this can be a long-running
+task depending on the number of apps to instrument as follows:
+
+```
+nohup bash instrumentBasicBlockCoverage.sh test_dir/plain-apps test_dir/apps >> instrumentation.log & 
+```
+
+The required binaries, i.e., `basicBlockCoverage.jar` and `dexanalyzer.jar`, can be built from the respective repositories
+https://github.com/mate-android-testing/wallmauer and https://github.com/mate-android-testing/dexanalyzer.
+You may require a different instrumentation binary depending on the type of coverage/fitness you intend to measure
+and consequently need to adjust the binary name accordingly in below script.
+
+```
+#!/bin/bash
+
+# contains the plains APKs
+INPUT=$1
+
+# will contain the instrumented APKs + for each app a directory containing the mandatory artefacts
+OUTPUT=$2
+
+# track how many apps could be sucessfully instrumented
+success=0
+
+for file in $INPUT/*.apk; do
+
+    # rename the APK
+    packageName=$(aapt dump badging $file | awk -v FS="'" '/package: name=/{print $2}')
+    echo "Package name: $packageName"
+
+    orig_file=$file
+
+    # only rename if necessary
+    if [[ $file != "$INPUT/$packageName.apk" ]]
+    then
+        cp $file "$INPUT/$packageName.apk"
+        file="$INPUT/$packageName.apk"
+    fi
+
+    # file name without .apk extension and path
+    base=$(basename $file)
+    base=${base%.apk}
+
+    # skip if (instrumented) APK already exists in output folder, use -f to overwrite
+    if [[ -f "$OUTPUT/$base.apk" ]] && [[ $3 != "-f" ]]
+    then
+        echo "Skipping $file"
+        if [[ $file != $orig_file ]]
+        then
+            rm $file
+        fi
+        continue
+    fi
+
+    # remove a previous blocks.txt
+    rm -f blocks.txt
+    rm -f branches.txt
+    # rm -f instrumentation-points.txt (only required in combination with branchDistance.jar binary)
+
+    echo "Instrumenting app $base ..."
+    java -Djdk.util.zip.disableZip64ExtraFieldValidation=true -Djdk.nio.zipfs.allowDotZipEntry=true -jar basicBlockCoverage.jar "$file" "--only-aut"
+
+    if ! [[ -f "$INPUT/$base-instrumented.apk" ]]
+    then
+        echo "Couldn't instrument app $base!"
+        continue
+    fi
+
+    # no blocks.txt typically exists if no core application class could be instrumented
+    if ! [[ -f blocks.txt ]]
+    then
+        echo "No blocks.txt for app $base!"
+        # remove the instrumented apk
+        rm -f "$INPUT/$base-instrumented.apk"
+        continue
+    fi
+
+    # output file name
+    instrumented="$INPUT/$base-instrumented.apk"
+    mv $instrumented "$OUTPUT/$base.apk"
+
+    instrumented="$OUTPUT/$base.apk"
+
+    echo "Signing app $base ..."
+    bash signAPK.sh $instrumented
+
+    echo "apktool d $base -f ..."
+    apktool d $instrumented -s -o "$OUTPUT/$base" -f
+
+    echo "Generating static intent info ..."
+    java -Djdk.util.zip.disableZip64ExtraFieldValidation=true -Djdk.nio.zipfs.allowDotZipEntry=true -jar dexanalyzer.jar $file
+    mkdir -p $OUTPUT/$base/static_data
+    mv $INPUT/$base/static_data/* $OUTPUT/$base/static_data/
+    rm -rf "$INPUT/$base"
+
+    # if we renamed the file (copied), we should delete the copy
+    if [[ $file != $orig_file ]]; then
+         rm $file
+    fi
+
+    echo "Move blocks.txt to app directory ..."
+    mv blocks.txt "$OUTPUT/$base/"
+    mv branches.txt "$OUTPUT/$base/"
+    # mv instrumentation-points.txt "$OUTPUT/$base/" (only required in combination with branchDistance.jar binary)
+
+    success=$((success+1))
+
+done
+
+echo "Could successfully instrument $success apps!"
+```
